@@ -2,12 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#1a1410" />
   <title>SoundTouch</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
     :root {
       --walnut:       #1a1410;
@@ -33,391 +37,626 @@
       --shadow-md:    0 4px 20px rgba(10,7,4,0.50);
       --shadow-lg:    0 12px 48px rgba(10,7,4,0.60);
       --shadow-inset: inset 0 1px 0 rgba(212,180,140,0.08);
+      --safe-top:     env(safe-area-inset-top, 0px);
+      --safe-bottom:  env(safe-area-inset-bottom, 0px);
+      --nav-h:        72px;
+      --header-h:     56px;
     }
 
-    html, body { height: 100%; background: var(--walnut); color: var(--flax); font-family: 'Inter', sans-serif; font-size: 14px; -webkit-font-smoothing: antialiased; }
+    html { height: 100%; overflow: hidden; }
 
+    body {
+      height: 100%; background: var(--walnut);
+      color: var(--flax); font-family: 'Inter', sans-serif;
+      font-size: 15px; -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+
+    /* Wood grain */
     body::before {
-      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.025;
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.022;
       background-image: repeating-linear-gradient(92deg,
-        transparent 0px, transparent 3px, rgba(255,220,160,0.6) 3px, rgba(255,220,160,0.6) 4px,
-        transparent 4px, transparent 11px, rgba(255,220,160,0.3) 11px, rgba(255,220,160,0.3) 12px,
-        transparent 12px, transparent 23px, rgba(255,220,160,0.5) 23px, rgba(255,220,160,0.5) 24px);
+        transparent 0px,transparent 3px,rgba(255,220,160,0.6) 3px,rgba(255,220,160,0.6) 4px,
+        transparent 4px,transparent 11px,rgba(255,220,160,0.3) 11px,rgba(255,220,160,0.3) 12px,
+        transparent 12px,transparent 23px,rgba(255,220,160,0.5) 23px,rgba(255,220,160,0.5) 24px);
     }
 
-    .app { display: grid; grid-template-columns: 288px 1fr; min-height: 100vh; position: relative; z-index: 1; }
+    /* ── App shell ── */
+    .app {
+      position: fixed; inset: 0;
+      display: grid;
+      grid-template-rows: var(--header-h) 1fr var(--nav-h);
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+      z-index: 1;
+    }
 
-    /* ── Sidebar ── */
-    .sidebar { background: var(--walnut2); border-right: 1px solid var(--border); box-shadow: var(--shadow-inset), 2px 0 24px rgba(10,7,4,0.30); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
-    .sidebar-header { padding: 28px 22px 20px; border-bottom: 1px solid var(--border2); background: linear-gradient(180deg, var(--walnut3) 0%, var(--walnut2) 100%); }
-    .wordmark { display: flex; align-items: center; gap: 9px; margin-bottom: 4px; }
-    .wm-icon { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--amber) 0%, #b86a20 100%); display: flex; align-items: center; justify-content: center; font-size: 15px; box-shadow: 0 2px 8px rgba(212,132,58,0.35); flex-shrink: 0; }
-    .wm-text { font-family: 'Lora', Georgia, serif; font-size: 19px; color: var(--parchment); letter-spacing: -0.2px; font-weight: 600; }
-    .wm-sub { font-size: 10px; font-weight: 400; letter-spacing: 1.4px; text-transform: uppercase; color: var(--grain3); padding-left: 39px; }
-    .section-label { font-size: 9.5px; font-weight: 500; letter-spacing: 1.6px; text-transform: uppercase; color: var(--grain3); padding: 20px 22px 9px; }
-    .speaker-list { flex: 1; padding: 0 10px 6px; }
-    .speaker-item { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: 10px; cursor: pointer; transition: background 0.15s; position: relative; }
-    .speaker-item:hover { background: var(--walnut3); }
-    .speaker-item.active { background: var(--plank); box-shadow: var(--shadow-inset), inset 3px 0 0 var(--amber); }
-    .speaker-avatar { width: 36px; height: 36px; border-radius: 9px; background: var(--plank); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; transition: all 0.2s; }
-    .speaker-item.active .speaker-avatar { background: rgba(212,132,58,0.15); border-color: var(--amber-border); }
-    .speaker-info { flex: 1; min-width: 0; }
-    .speaker-name { font-weight: 500; font-size: 13.5px; color: var(--flax); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .speaker-item.active .speaker-name { color: var(--parchment); }
-    .speaker-status { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--grain3); margin-top: 1px; }
-    .status-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--grain2); flex-shrink: 0; transition: all 0.3s; }
-    .status-dot.online { background: var(--online); box-shadow: 0 0 0 3px var(--online-glow); }
-    .speaker-zone-tag { font-size: 9.5px; color: var(--amber2); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .speaker-delete { opacity: 0; padding: 5px; background: none; border: none; color: var(--grain2); cursor: pointer; font-size: 12px; border-radius: 6px; transition: all 0.15s; }
-    .speaker-item:hover .speaker-delete { opacity: 1; }
-    .speaker-delete:hover { color: var(--danger); background: rgba(192,90,58,0.15); }
-    .sidebar-actions { padding: 6px 10px 16px; display: flex; flex-direction: column; gap: 8px; }
-    .add-btn { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: none; border: 1px dashed var(--grain); border-radius: 10px; color: var(--grain3); font-family: inherit; font-size: 12.5px; font-weight: 500; cursor: pointer; transition: all 0.15s; width: 100%; }
-    .add-btn:hover { border-color: var(--amber); color: var(--amber); background: var(--amber-glow); }
+    /* ── Header ── */
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 18px;
+      background: var(--walnut2);
+      border-bottom: 1px solid var(--border2);
+      box-shadow: var(--shadow-inset);
+      position: relative; z-index: 10;
+    }
 
-    /* ── Main ── */
-    .main { padding: 36px 40px; overflow-y: auto; }
-    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 65vh; gap: 12px; text-align: center; }
-    .empty-icon { width: 80px; height: 80px; border-radius: 20px; background: var(--walnut3); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 34px; margin-bottom: 8px; box-shadow: var(--shadow-sm); }
-    .empty-title { font-family: 'Lora', Georgia, serif; font-size: 22px; color: var(--flax); }
+    .header-left { display: flex; align-items: center; gap: 10px; }
 
-    #speakerDetail { display: none; flex-direction: column; gap: 22px; }
+    .wm-icon {
+      width: 32px; height: 32px; border-radius: 9px;
+      background: linear-gradient(135deg, var(--amber) 0%, #b86a20 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; box-shadow: 0 2px 8px rgba(212,132,58,0.35);
+      flex-shrink: 0;
+    }
 
-    /* ── Now Playing ── */
-    .np-card { background: var(--walnut3); border: 1px solid var(--border); border-radius: 20px; padding: 30px; box-shadow: var(--shadow-md), var(--shadow-inset); position: relative; overflow: hidden; }
-    .np-card::before { content: ''; position: absolute; top: -100px; right: -80px; width: 340px; height: 340px; border-radius: 50%; background: radial-gradient(circle, rgba(212,132,58,0.14) 0%, transparent 65%); pointer-events: none; }
-    .np-card::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 0% 100%, rgba(10,7,4,0.25) 0%, transparent 55%); pointer-events: none; border-radius: 20px; }
+    .wm-text {
+      font-family: 'Lora', Georgia, serif;
+      font-size: 18px; color: var(--parchment);
+      font-weight: 600; letter-spacing: -0.2px;
+    }
 
-    .np-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; gap: 12px; }
-    .np-top-left { display: flex; flex-direction: column; gap: 8px; }
+    .header-actions { display: flex; gap: 8px; }
 
-    .np-badge { display: inline-flex; align-items: center; gap: 7px; background: rgba(212,132,58,0.12); border: 1px solid rgba(212,132,58,0.22); border-radius: 20px; padding: 5px 12px 5px 8px; font-size: 10.5px; font-weight: 500; letter-spacing: 0.8px; text-transform: uppercase; color: var(--amber2); }
-    .badge-pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--online); animation: amber-pulse 2.2s ease-out infinite; }
+    .hdr-btn {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: var(--walnut3); border: 1px solid var(--border);
+      color: var(--sandstone); font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+    }
+    .hdr-btn:active { background: var(--plank); transform: scale(0.93); }
+
+    /* ── Scroll area ── */
+    .scroll-area {
+      overflow-y: auto; overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+      overscroll-behavior: contain;
+    }
+
+    .scroll-inner { padding: 18px 16px 24px; display: flex; flex-direction: column; gap: 14px; }
+
+    /* ── Empty state ── */
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; min-height: 60vh; gap: 14px; text-align: center;
+      padding: 24px;
+    }
+    .empty-icon {
+      width: 88px; height: 88px; border-radius: 22px;
+      background: var(--walnut3); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 38px; margin-bottom: 6px; box-shadow: var(--shadow-sm);
+    }
+    .empty-title { font-family: 'Lora', serif; font-size: 22px; color: var(--flax); }
+    .empty-sub { font-size: 13px; color: var(--grain3); line-height: 1.5; }
+
+    /* ── Now Playing card ── */
+    .np-card {
+      background: var(--walnut3); border: 1px solid var(--border);
+      border-radius: 22px; overflow: hidden;
+      box-shadow: var(--shadow-md), var(--shadow-inset);
+      position: relative;
+    }
+
+    .np-card::before {
+      content: ''; position: absolute; top: -80px; right: -60px;
+      width: 280px; height: 280px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(212,132,58,0.16) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    /* Art banner */
+    .np-art-banner {
+      width: 100%; aspect-ratio: 16/7; overflow: hidden;
+      background: var(--plank); position: relative;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .np-art-banner img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: opacity 0.4s ease;
+    }
+
+    .np-art-placeholder {
+      font-size: 52px; opacity: 0.4;
+    }
+
+    /* Gradient overlay on art */
+    .np-art-banner::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(to bottom, transparent 40%, var(--walnut3) 100%);
+    }
+
+    .np-body { padding: 18px 20px 20px; position: relative; z-index: 1; }
+
+    .np-top-row { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; gap: 10px; }
+
+    .np-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(212,132,58,0.12); border: 1px solid rgba(212,132,58,0.22);
+      border-radius: 20px; padding: 4px 11px 4px 7px;
+      font-size: 10px; font-weight: 500; letter-spacing: 0.8px;
+      text-transform: uppercase; color: var(--amber2);
+    }
+
+    .badge-pulse {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--online); animation: pulse 2.2s ease-out infinite;
+    }
     .badge-pulse.off { background: var(--grain2); animation: none; }
-    @keyframes amber-pulse { 0% { box-shadow: 0 0 0 0 rgba(122,184,150,0.5); } 70% { box-shadow: 0 0 0 7px rgba(122,184,150,0); } 100% { box-shadow: 0 0 0 0 rgba(122,184,150,0); } }
+    @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(122,184,150,0.5)} 70%{box-shadow:0 0 0 7px rgba(122,184,150,0)} 100%{box-shadow:0 0 0 0 rgba(122,184,150,0)} }
 
-    /* Progress bar */
-    .np-progress { display: none; flex-direction: column; gap: 4px; }
-    .np-progress.visible { display: flex; }
-    .progress-bar-wrap { height: 3px; background: var(--grain); border-radius: 2px; overflow: hidden; }
-    .progress-bar-fill { height: 100%; background: var(--amber); border-radius: 2px; width: 0%; transition: width 1s linear; }
-    .progress-times { display: flex; justify-content: space-between; font-size: 10px; color: var(--grain3); }
+    .np-viz { display: flex; align-items: center; gap: 2.5px; height: 22px; }
+    .viz-bar { width: 3px; border-radius: 2px; background: var(--amber); opacity: 0.5; transition: height 0.18s ease; }
 
-    /* Album art */
-    .np-art { width: 72px; height: 72px; border-radius: 12px; background: var(--plank); border: 1px solid var(--border); overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: var(--shadow-sm); }
-    .np-art img { width: 100%; height: 100%; object-fit: cover; }
+    .np-track {
+      font-family: 'Lora', Georgia, serif;
+      font-size: 28px; line-height: 1.15;
+      color: var(--parchment); font-weight: 600;
+      margin-bottom: 4px;
+    }
 
-    .np-viz { display: flex; align-items: center; gap: 3px; height: 28px; }
-    .viz-bar { width: 3px; border-radius: 2px; background: var(--amber); opacity: 0.5; transition: height 0.2s ease; }
+    .np-artist { font-size: 14px; color: var(--sandstone); margin-bottom: 12px; }
 
-    .np-track { font-family: 'Lora', Georgia, serif; font-size: 34px; line-height: 1.1; color: var(--parchment); margin-bottom: 6px; font-weight: 600; }
-    .np-artist { font-size: 13.5px; color: var(--sandstone); margin-bottom: 14px; }
-    .np-source-tag { display: inline-block; background: rgba(212,180,140,0.07); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 10.5px; font-weight: 500; letter-spacing: 0.6px; text-transform: uppercase; color: var(--grain3); }
+    .np-source-tag {
+      display: inline-block; background: rgba(212,180,140,0.07);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 4px 10px; font-size: 10px; font-weight: 500;
+      letter-spacing: 0.6px; text-transform: uppercase; color: var(--grain3);
+    }
+
+    /* Progress */
+    .np-progress { margin-top: 14px; display: none; }
+    .np-progress.visible { display: block; }
+    .progress-track { height: 3px; background: var(--grain); border-radius: 2px; overflow: hidden; margin-bottom: 5px; }
+    .progress-fill { height: 100%; background: linear-gradient(to right, var(--amber2), var(--amber)); border-radius: 2px; width: 0%; transition: width 1s linear; }
+    .progress-times { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--grain3); }
 
     /* Transport */
-    .transport { display: flex; align-items: center; gap: 10px; margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--border2); }
-    .t-spacer { flex: 1; }
-    .t-btn { display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; border-radius: 50%; transition: all 0.17s; font-family: inherit; }
-    .t-btn.sm { width: 38px; height: 38px; font-size: 14px; background: var(--plank); border: 1px solid var(--border); color: var(--sandstone); box-shadow: var(--shadow-sm); }
-    .t-btn.sm:hover { background: var(--grain); color: var(--parchment); }
-    .t-btn.play { width: 56px; height: 56px; font-size: 19px; background: linear-gradient(145deg, var(--amber2) 0%, var(--amber) 100%); color: var(--walnut); box-shadow: 0 4px 18px rgba(212,132,58,0.40), var(--shadow-inset); }
-    .t-btn.play:hover { transform: scale(1.05); box-shadow: 0 6px 24px rgba(212,132,58,0.55), var(--shadow-inset); }
-    .t-btn.play:active { transform: scale(0.97); }
-    .t-btn.util { width: 36px; height: 36px; font-size: 12px; background: var(--walnut2); border: 1px solid var(--border2); color: var(--grain3); border-radius: 9px; box-shadow: var(--shadow-sm); }
-    .t-btn.util:hover { background: var(--plank); color: var(--sandstone); }
-    .t-btn.util.active { background: rgba(212,132,58,0.15); border-color: var(--amber-border); color: var(--amber2); }
+    .transport {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 18px; padding-top: 16px;
+      border-top: 1px solid var(--border2);
+      gap: 6px;
+    }
 
-    /* Cards */
-    .card { background: var(--walnut3); border: 1px solid var(--border); border-radius: 16px; padding: 22px; box-shadow: var(--shadow-sm), var(--shadow-inset); }
-    .card-label { font-size: 9.5px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--grain3); margin-bottom: 16px; }
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .t-btn {
+      display: flex; align-items: center; justify-content: center;
+      border: none; cursor: pointer; transition: all 0.14s;
+      font-family: inherit; user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-    /* Sliders */
+    .t-btn:active { transform: scale(0.88); }
+
+    .t-btn.sm {
+      width: 50px; height: 50px; border-radius: 50%; font-size: 18px;
+      background: var(--plank); border: 1px solid var(--border);
+      color: var(--sandstone); box-shadow: var(--shadow-sm);
+    }
+
+    .t-btn.play {
+      width: 68px; height: 68px; border-radius: 50%; font-size: 24px;
+      background: linear-gradient(145deg, var(--amber2) 0%, var(--amber) 100%);
+      color: var(--walnut); font-weight: 600;
+      box-shadow: 0 5px 22px rgba(212,132,58,0.45), var(--shadow-inset);
+    }
+
+    .t-btn.play:active { transform: scale(0.92); }
+
+    .t-btn.util {
+      width: 44px; height: 44px; border-radius: 11px; font-size: 14px;
+      background: var(--walnut2); border: 1px solid var(--border2);
+      color: var(--grain3); box-shadow: var(--shadow-sm);
+    }
+
+    .t-btn.util.active {
+      background: rgba(212,132,58,0.15); border-color: var(--amber-border);
+      color: var(--amber2);
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--walnut3); border: 1px solid var(--border);
+      border-radius: 18px; padding: 18px;
+      box-shadow: var(--shadow-sm), var(--shadow-inset);
+    }
+
+    .card-label {
+      font-size: 9px; font-weight: 600; letter-spacing: 1.6px;
+      text-transform: uppercase; color: var(--grain3); margin-bottom: 14px;
+    }
+
+    /* ── Sliders ── */
     .slider-row { display: flex; align-items: center; gap: 14px; }
-    .slider-value { font-family: 'Lora', Georgia, serif; font-size: 30px; color: var(--amber2); min-width: 46px; text-align: right; line-height: 1; }
-    input[type=range] { -webkit-appearance: none; appearance: none; flex: 1; height: 3px; border-radius: 2px; outline: none; cursor: pointer; background: linear-gradient(to right, var(--amber) 0%, var(--amber) var(--pct,50%), var(--grain) var(--pct,50%), var(--grain) 100%); }
-    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--parchment); border: 2px solid var(--amber); box-shadow: 0 2px 8px rgba(10,7,4,0.50); cursor: pointer; transition: transform 0.14s; }
-    input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.18); }
 
-    /* Section heading */
-    .section-heading { font-family: 'Lora', Georgia, serif; font-size: 17px; color: var(--flax); margin-bottom: 13px; font-weight: 600; }
+    .slider-value {
+      font-family: 'Lora', Georgia, serif;
+      font-size: 32px; color: var(--amber2);
+      min-width: 48px; text-align: right; line-height: 1;
+    }
 
-    /* Presets */
-    .presets-grid { display: grid; grid-template-columns: repeat(6,1fr); gap: 10px; }
-    .preset-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 12px 6px; background: var(--walnut3); border: 1px solid var(--border); border-radius: 13px; cursor: pointer; font-family: inherit; transition: all 0.17s; min-height: 78px; box-shadow: var(--shadow-sm), var(--shadow-inset); position: relative; }
-    .preset-btn:hover { border-color: var(--amber-border); background: var(--plank); transform: translateY(-2px); box-shadow: var(--shadow-md), var(--shadow-inset); }
-    .preset-btn.active { border-color: var(--amber); background: var(--plank); }
-    .preset-btn.active::after { content: ''; position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); width: 16px; height: 2px; background: var(--amber); border-radius: 1px; }
-    .preset-btn.empty .preset-num { color: var(--grain); }
-    .preset-btn.empty .preset-name { color: var(--grain); }
-    .preset-num { font-family: 'Lora', Georgia, serif; font-size: 24px; color: var(--amber2); line-height: 1; }
-    .preset-name { font-size: 9px; font-weight: 500; color: var(--sandstone); text-align: center; line-height: 1.3; word-break: break-word; padding: 0 2px; }
+    input[type=range] {
+      -webkit-appearance: none; appearance: none;
+      flex: 1; height: 4px; border-radius: 2px; outline: none; cursor: pointer;
+      background: linear-gradient(to right, var(--amber) 0%, var(--amber) var(--pct,50%), var(--grain) var(--pct,50%), var(--grain) 100%);
+    }
 
-    /* Sources */
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 26px; height: 26px; border-radius: 50%;
+      background: var(--parchment); border: 2px solid var(--amber);
+      box-shadow: 0 2px 10px rgba(10,7,4,0.50); cursor: pointer;
+    }
+
+    /* ── Two-col for vol+bass ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* ── Group volume ── */
+    .group-vol-card {
+      background: linear-gradient(135deg, var(--walnut3) 0%, rgba(212,132,58,0.06) 100%);
+      border: 1px solid var(--amber-border); border-radius: 18px; padding: 18px;
+      box-shadow: var(--shadow-sm), var(--shadow-inset);
+    }
+
+    .group-vol-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .group-vol-title { font-size: 9px; font-weight: 600; letter-spacing: 1.6px; text-transform: uppercase; color: var(--amber2); }
+    .group-vol-rooms { font-size: 11px; color: var(--grain3); }
+
+    /* ── Presets ── */
+    .presets-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+    .preset-btn {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 5px; padding: 16px 8px;
+      background: var(--walnut3); border: 1px solid var(--border);
+      border-radius: 15px; cursor: pointer; font-family: inherit;
+      transition: all 0.15s; min-height: 86px;
+      box-shadow: var(--shadow-sm), var(--shadow-inset);
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+    }
+
+    .preset-btn:active { transform: scale(0.94); }
+
+    .preset-btn.active {
+      border-color: var(--amber); background: var(--plank);
+      box-shadow: 0 0 0 1px var(--amber-border), var(--shadow-sm);
+    }
+
+    .preset-btn.active::after {
+      content: ''; position: absolute; bottom: 7px; left: 50%; transform: translateX(-50%);
+      width: 18px; height: 2px; background: var(--amber); border-radius: 1px;
+    }
+
+    .preset-num { font-family: 'Lora', serif; font-size: 26px; color: var(--amber2); line-height: 1; }
+    .preset-name { font-size: 9.5px; font-weight: 500; color: var(--sandstone); text-align: center; line-height: 1.3; word-break: break-word; padding: 0 2px; }
+    .preset-btn.empty .preset-num, .preset-btn.empty .preset-name { color: var(--grain); }
+
+    /* ── Sources ── */
     .sources-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
-    .source-chip { display: flex; align-items: center; gap: 6px; padding: 7px 15px; background: var(--plank); border: 1px solid var(--border); border-radius: 20px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 500; color: var(--sandstone); transition: all 0.15s; box-shadow: var(--shadow-sm); }
-    .source-chip:hover { border-color: var(--amber-border); color: var(--flax); background: var(--grain); }
-    .source-chip.active { background: var(--amber); border-color: var(--amber); color: var(--walnut); box-shadow: 0 2px 10px rgba(212,132,58,0.30); }
 
-    /* Zone */
-    .zone-empty { padding: 18px; background: var(--walnut2); border: 1px dashed var(--grain); border-radius: 12px; text-align: center; color: var(--grain3); font-size: 13px; }
-    .zone-member-item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; background: var(--walnut2); border: 1px solid var(--border2); border-radius: 11px; margin-bottom: 8px; box-shadow: var(--shadow-sm); }
-    .zone-avatar { width: 34px; height: 34px; border-radius: 8px; background: var(--plank); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
-    .zone-name { font-weight: 500; font-size: 13px; flex: 1; color: var(--flax); }
-    .zone-pill { font-size: 9.5px; font-weight: 500; letter-spacing: 0.6px; text-transform: uppercase; padding: 3px 9px; border-radius: 10px; }
+    .source-chip {
+      display: flex; align-items: center; padding: 9px 18px;
+      background: var(--plank); border: 1px solid var(--border);
+      border-radius: 22px; cursor: pointer; font-family: inherit;
+      font-size: 13px; font-weight: 500; color: var(--sandstone);
+      transition: all 0.14s; box-shadow: var(--shadow-sm);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .source-chip:active { transform: scale(0.94); }
+    .source-chip.active { background: var(--amber); border-color: var(--amber); color: var(--walnut); font-weight: 600; }
+
+    /* ── Zone ── */
+    .zone-empty { padding: 16px; background: var(--walnut2); border: 1px dashed var(--grain); border-radius: 12px; text-align: center; color: var(--grain3); font-size: 13px; }
+
+    .zone-member-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 13px 14px; background: var(--walnut2);
+      border: 1px solid var(--border2); border-radius: 13px;
+      margin-bottom: 8px; box-shadow: var(--shadow-sm);
+    }
+
+    .zone-avatar { width: 36px; height: 36px; border-radius: 9px; background: var(--plank); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .zone-name { font-weight: 500; font-size: 14px; flex: 1; color: var(--flax); }
+    .zone-pill { font-size: 9.5px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; padding: 4px 10px; border-radius: 10px; }
     .zone-pill.master { background: rgba(212,132,58,0.18); color: var(--amber2); border: 1px solid var(--amber-border); }
-    .zone-pill.slave  { background: rgba(122,184,150,0.14); color: var(--online);  border: 1px solid rgba(122,184,150,0.25); }
-    .zone-add-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 10px; background: none; border: 1px dashed var(--grain); border-radius: 11px; color: var(--grain3); font-family: inherit; font-size: 12.5px; font-weight: 500; cursor: pointer; transition: all 0.15s; margin-top: 8px; }
-    .zone-add-btn:hover { border-color: var(--amber); color: var(--amber); background: var(--amber-glow); }
-    .zone-remove { background: none; border: none; cursor: pointer; color: var(--grain2); font-size: 12px; padding: 4px; border-radius: 6px; transition: all 0.15s; }
-    .zone-remove:hover { color: var(--danger); background: rgba(192,90,58,0.15); }
+    .zone-pill.slave  { background: rgba(122,184,150,0.14); color: var(--online); border: 1px solid rgba(122,184,150,0.25); }
 
-    /* Group volume */
-    .group-vol-card { background: linear-gradient(135deg, var(--walnut3) 0%, rgba(212,132,58,0.06) 100%); border: 1px solid var(--amber-border); border-radius: 16px; padding: 22px; box-shadow: var(--shadow-sm), var(--shadow-inset); }
-    .group-vol-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-    .group-vol-title { font-size: 9.5px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--amber2); }
-    .group-vol-speakers { font-size: 11px; color: var(--grain3); }
+    .zone-actions { display: flex; gap: 8px; margin-top: 10px; }
 
-    /* Modal */
-    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(10,7,4,0.70); backdrop-filter: blur(10px); z-index: 500; align-items: center; justify-content: center; }
-    .modal-overlay.open { display: flex; }
-    .modal { background: var(--walnut2); border: 1px solid var(--border); border-radius: 20px; padding: 30px; width: 380px; box-shadow: var(--shadow-lg), var(--shadow-inset); animation: modal-in 0.22s cubic-bezier(0.34,1.56,0.64,1); }
-    @keyframes modal-in { from { opacity:0; transform: scale(0.93) translateY(10px); } to { opacity:1; transform: none; } }
-    .modal-title { font-family: 'Lora', Georgia, serif; font-size: 21px; color: var(--parchment); margin-bottom: 20px; font-weight: 600; }
-    .field { margin-bottom: 15px; }
-    .field label { display: block; font-size: 10px; font-weight: 500; letter-spacing: 1.2px; text-transform: uppercase; color: var(--grain3); margin-bottom: 7px; }
-    .field input { width: 100%; padding: 11px 14px; background: var(--walnut3); border: 1px solid var(--border); border-radius: 9px; color: var(--flax); font-family: inherit; font-size: 14px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
-    .field input:focus { border-color: var(--amber-border); box-shadow: 0 0 0 3px rgba(212,132,58,0.12); }
-    .field input::placeholder { color: var(--grain3); }
-    .modal-btns { display: flex; gap: 10px; margin-top: 22px; }
-    .btn { flex: 1; padding: 11px 16px; border-radius: 9px; font-family: inherit; font-size: 13.5px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
-    .btn-ghost { background: var(--walnut3); border: 1px solid var(--border); color: var(--sandstone); }
-    .btn-ghost:hover { background: var(--plank); color: var(--flax); }
-    .btn-primary { background: linear-gradient(145deg, var(--amber2) 0%, var(--amber) 100%); color: var(--walnut); font-weight: 600; box-shadow: 0 2px 10px rgba(212,132,58,0.30); }
-    .btn-primary:hover { box-shadow: 0 4px 16px rgba(212,132,58,0.42); filter: brightness(1.06); }
-    .zone-check-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--walnut3); border: 1px solid transparent; border-radius: 11px; cursor: pointer; margin-bottom: 8px; transition: all 0.15s; }
-    .zone-check-item:has(input:checked) { border-color: rgba(122,184,150,0.30); background: rgba(122,184,150,0.08); }
-    .zone-check-item input { accent-color: var(--online); width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
-    .zone-check-name { font-size: 13.5px; font-weight: 500; color: var(--flax); flex: 1; }
-    .zone-check-ip { font-size: 11px; color: var(--grain3); }
+    .zone-btn {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
+      padding: 12px; background: none; border: 1px dashed var(--grain);
+      border-radius: 12px; color: var(--grain3); font-family: inherit;
+      font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-    /* Keyboard shortcut overlay */
-    .kb-overlay { display: none; position: fixed; inset: 0; background: rgba(10,7,4,0.80); backdrop-filter: blur(12px); z-index: 600; align-items: center; justify-content: center; }
-    .kb-overlay.open { display: flex; }
-    .kb-modal { background: var(--walnut2); border: 1px solid var(--border); border-radius: 20px; padding: 32px; width: 420px; box-shadow: var(--shadow-lg); animation: modal-in 0.22s cubic-bezier(0.34,1.56,0.64,1); }
-    .kb-title { font-family: 'Lora', Georgia, serif; font-size: 20px; color: var(--parchment); margin-bottom: 22px; font-weight: 600; }
-    .kb-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border2); }
-    .kb-row:last-child { border-bottom: none; }
-    .kb-desc { font-size: 13px; color: var(--sandstone); }
-    .kb-key { display: inline-flex; align-items: center; justify-content: center; padding: 3px 9px; background: var(--plank); border: 1px solid var(--border); border-radius: 6px; font-family: monospace; font-size: 12px; color: var(--flax); box-shadow: 0 2px 0 rgba(10,7,4,0.40); min-width: 32px; }
+    .zone-btn:hover, .zone-btn:active { border-color: var(--amber); color: var(--amber); background: var(--amber-glow); }
 
-    /* Offline banner */
-    .offline-banner { display: none; align-items: center; gap: 10px; padding: 10px 18px; background: rgba(192,90,58,0.15); border: 1px solid rgba(192,90,58,0.30); border-radius: 12px; font-size: 12.5px; color: var(--danger); }
+    .zone-btn.everywhere { border-color: rgba(122,184,150,0.30); color: var(--online); }
+    .zone-btn.everywhere:hover, .zone-btn.everywhere:active { border-color: var(--online); background: var(--online-glow); }
+
+    /* ── Offline banner ── */
+    .offline-banner {
+      display: none; align-items: center; gap: 10px;
+      padding: 11px 16px; background: rgba(192,90,58,0.15);
+      border: 1px solid rgba(192,90,58,0.30); border-radius: 13px;
+      font-size: 13px; color: var(--danger);
+    }
     .offline-banner.visible { display: flex; }
 
-    /* Toasts */
-    .toast-container { position: fixed; bottom: 24px; right: 28px; display: flex; flex-direction: column; gap: 8px; z-index: 999; }
-    .toast { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--plank); border: 1px solid var(--border); color: var(--flax); border-radius: 12px; font-size: 13px; font-weight: 500; box-shadow: var(--shadow-lg); animation: toast-in 0.2s ease; }
-    .toast-icon { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
+    /* ── Bottom nav ── */
+    .bottom-nav {
+      background: var(--walnut2); border-top: 1px solid var(--border);
+      display: flex; align-items: center;
+      overflow-x: auto; overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+      scrollbar-width: none;
+      padding: 0 8px;
+      box-shadow: 0 -4px 24px rgba(10,7,4,0.30);
+    }
+
+    .bottom-nav::-webkit-scrollbar { display: none; }
+
+    .nav-item {
+      flex-shrink: 0; display: flex; flex-direction: column;
+      align-items: center; gap: 3px; padding: 10px 14px;
+      border-radius: 12px; cursor: pointer; border: none;
+      background: none; font-family: inherit; color: var(--grain3);
+      font-size: 10px; font-weight: 500; min-width: 64px;
+      transition: all 0.15s; position: relative;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .nav-item.active { color: var(--amber2); }
+
+    .nav-item.active::before {
+      content: ''; position: absolute; bottom: 6px; left: 50%;
+      transform: translateX(-50%); width: 20px; height: 2px;
+      background: var(--amber); border-radius: 1px;
+    }
+
+    .nav-emoji { font-size: 22px; line-height: 1; }
+    .nav-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--grain2); position: absolute; top: 8px; right: 10px; transition: all 0.3s; }
+    .nav-dot.online { background: var(--online); box-shadow: 0 0 0 3px var(--online-glow); }
+
+    /* ── Modals ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(10,7,4,0.72); backdrop-filter: blur(12px);
+      z-index: 500; align-items: flex-end; justify-content: center;
+      padding-bottom: calc(var(--safe-bottom));
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    /* Sheet style from bottom on mobile */
+    .modal {
+      background: var(--walnut2); border: 1px solid var(--border);
+      border-radius: 24px 24px 0 0; padding: 10px 22px 28px;
+      width: 100%; max-width: 540px;
+      box-shadow: var(--shadow-lg), var(--shadow-inset);
+      animation: sheet-in 0.28s cubic-bezier(0.34,1.3,0.64,1);
+      max-height: 88vh; overflow-y: auto;
+    }
+
+    @keyframes sheet-in { from { opacity:0.5; transform: translateY(100px); } to { opacity:1; transform: none; } }
+
+    .modal-handle { width: 36px; height: 4px; background: var(--grain); border-radius: 2px; margin: 8px auto 18px; }
+    .modal-title { font-family: 'Lora', serif; font-size: 22px; color: var(--parchment); margin-bottom: 20px; font-weight: 600; }
+
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 10px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--grain3); margin-bottom: 8px; }
+    .field input { width: 100%; padding: 13px 16px; background: var(--walnut3); border: 1px solid var(--border); border-radius: 11px; color: var(--flax); font-family: inherit; font-size: 16px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
+    .field input:focus { border-color: var(--amber-border); box-shadow: 0 0 0 3px rgba(212,132,58,0.12); }
+    .field input::placeholder { color: var(--grain3); }
+
+    .modal-btns { display: flex; gap: 10px; margin-top: 22px; }
+    .btn { flex: 1; padding: 14px 16px; border-radius: 12px; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+    .btn:active { transform: scale(0.96); }
+    .btn-ghost { background: var(--walnut3); border: 1px solid var(--border); color: var(--sandstone); }
+    .btn-primary { background: linear-gradient(145deg, var(--amber2) 0%, var(--amber) 100%); color: var(--walnut); box-shadow: 0 3px 12px rgba(212,132,58,0.35); }
+
+    .zone-check-item { display: flex; align-items: center; gap: 12px; padding: 13px 14px; background: var(--walnut3); border: 1px solid transparent; border-radius: 13px; cursor: pointer; margin-bottom: 8px; transition: all 0.14s; -webkit-tap-highlight-color: transparent; }
+    .zone-check-item:has(input:checked) { border-color: rgba(122,184,150,0.35); background: rgba(122,184,150,0.08); }
+    .zone-check-item input { accent-color: var(--online); width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; }
+    .zone-check-name { font-size: 15px; font-weight: 500; color: var(--flax); flex: 1; }
+    .zone-check-ip { font-size: 11px; color: var(--grain3); }
+
+    /* ── Toasts ── */
+    .toast-container { position: fixed; top: calc(var(--header-h) + var(--safe-top) + 12px); left: 16px; right: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 999; pointer-events: none; }
+    .toast { display: flex; align-items: center; gap: 10px; padding: 13px 16px; background: var(--plank); border: 1px solid var(--border); color: var(--flax); border-radius: 14px; font-size: 14px; font-weight: 500; box-shadow: var(--shadow-lg); animation: toast-in 0.2s ease; }
+    .toast-icon { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
     .toast.success .toast-icon { background: rgba(122,184,150,0.25); color: var(--online); }
     .toast.error   .toast-icon { background: rgba(192,90,58,0.25); color: var(--danger); }
-    @keyframes toast-in { from { opacity:0; transform:translateX(16px); } to { opacity:1; transform:none; } }
+    @keyframes toast-in { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:none; } }
 
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--grain); border-radius: 2px; }
-
-    /* Mobile bottom nav */
-    .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--walnut2); border-top: 1px solid var(--border); padding: 10px 16px 14px; z-index: 400; overflow-x: auto; white-space: nowrap; }
-    .mobile-nav-item { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 14px; border-radius: 10px; cursor: pointer; font-size: 10px; color: var(--grain3); border: none; background: none; font-family: inherit; }
-    .mobile-nav-item.active { color: var(--amber2); background: rgba(212,132,58,0.12); }
-    .mobile-nav-item .nav-emoji { font-size: 18px; }
-
-    @media (max-width: 768px) {
-      .app { grid-template-columns: 1fr; }
-      .sidebar { display: none; }
-      .presets-grid { grid-template-columns: repeat(3,1fr); }
-      .two-col { grid-template-columns: 1fr; }
-      .main { padding: 20px 16px 100px; }
-      .mobile-nav { display: flex; }
-      .np-track { font-size: 26px; }
-    }
+    ::-webkit-scrollbar { width: 0; }
   </style>
 </head>
 <body>
 <div class="app">
 
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <div class="wordmark">
-        <div class="wm-icon">🔊</div>
-        <span class="wm-text">SoundTouch</span>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="wm-icon">🔊</div>
+      <span class="wm-text">SoundTouch</span>
+    </div>
+    <div class="header-actions">
+      <button class="hdr-btn" onclick="playEverywhere()" title="Play everywhere">📡</button>
+      <button class="hdr-btn" onclick="openAddModal()">＋</button>
+    </div>
+  </header>
+
+  <!-- Scroll area -->
+  <div class="scroll-area" id="scrollArea">
+    <div class="scroll-inner" id="scrollInner">
+
+      <!-- Empty state -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">🎵</div>
+        <p class="empty-title">Pick a room</p>
+        <p class="empty-sub">Tap a speaker below to control it</p>
       </div>
-      <p class="wm-sub">Multi-room audio</p>
-    </div>
-    <p class="section-label">Speakers</p>
-    <div class="speaker-list" id="speakerList"></div>
-    <div class="sidebar-actions">
-      <button class="add-btn" onclick="openAddModal()">＋ Add speaker</button>
-      <button class="add-btn" onclick="showKbOverlay()" style="gap:8px">⌨ Keyboard shortcuts</button>
-    </div>
-  </aside>
 
-  <!-- Main -->
-  <main class="main">
-    <div class="empty-state" id="emptyState">
-      <div class="empty-icon">🎶</div>
-      <p class="empty-title">Select a speaker</p>
-      <p style="font-size:13px;color:var(--grain3)">Choose a room from the sidebar</p>
-    </div>
+      <!-- Speaker detail -->
+      <div id="speakerDetail" style="display:none;flex-direction:column;gap:14px">
 
-    <div id="speakerDetail">
+        <!-- Offline banner -->
+        <div class="offline-banner" id="offlineBanner">⚠ Speaker offline — reconnecting…</div>
 
-      <!-- Offline banner -->
-      <div class="offline-banner" id="offlineBanner">⚠ Speaker is offline — reconnecting…</div>
-
-      <!-- Now Playing -->
-      <div class="np-card">
-        <div class="np-top">
-          <div class="np-top-left">
-            <div class="np-badge">
-              <span class="badge-pulse" id="badgePulse"></span>
-              <span id="badgeText">Now playing</span>
+        <!-- Now Playing -->
+        <div class="np-card">
+          <div class="np-art-banner" id="npArtBanner">
+            <div class="np-art-placeholder" id="npArtPlaceholder">🎵</div>
+          </div>
+          <div class="np-body">
+            <div class="np-top-row">
+              <div class="np-badge">
+                <span class="badge-pulse" id="badgePulse"></span>
+                <span id="badgeText">Now playing</span>
+              </div>
+              <div class="np-viz" id="viz">
+                <div class="viz-bar" style="height:55%"></div>
+                <div class="viz-bar" style="height:80%"></div>
+                <div class="viz-bar" style="height:44%"></div>
+                <div class="viz-bar" style="height:90%"></div>
+                <div class="viz-bar" style="height:60%"></div>
+                <div class="viz-bar" style="height:72%"></div>
+                <div class="viz-bar" style="height:38%"></div>
+                <div class="viz-bar" style="height:84%"></div>
+              </div>
             </div>
+            <div class="np-track" id="npTrack">—</div>
+            <div class="np-artist" id="npArtist"></div>
+            <span class="np-source-tag" id="npSource">—</span>
             <div class="np-progress" id="npProgress">
-              <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill"></div></div>
+              <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
               <div class="progress-times"><span id="progressElapsed">0:00</span><span id="progressTotal">0:00</span></div>
             </div>
-          </div>
-          <div style="display:flex;align-items:flex-start;gap:12px">
-            <div class="np-art" id="npArt">🎵</div>
-            <div class="np-viz" id="viz">
-              <div class="viz-bar" style="height:55%"></div><div class="viz-bar" style="height:80%"></div>
-              <div class="viz-bar" style="height:42%"></div><div class="viz-bar" style="height:90%"></div>
-              <div class="viz-bar" style="height:58%"></div><div class="viz-bar" style="height:74%"></div>
-              <div class="viz-bar" style="height:38%"></div><div class="viz-bar" style="height:86%"></div>
-              <div class="viz-bar" style="height:52%"></div><div class="viz-bar" style="height:68%"></div>
+            <div class="transport">
+              <button class="t-btn util" id="shuffleBtn" onclick="toggleShuffle()">⇄</button>
+              <button class="t-btn sm" onclick="sendKey('PREV_TRACK')">⏮</button>
+              <button class="t-btn play" id="playBtn" onclick="togglePlay()">▶</button>
+              <button class="t-btn sm" onclick="sendKey('NEXT_TRACK')">⏭</button>
+              <button class="t-btn util" id="repeatBtn" onclick="cycleRepeat()">↺</button>
             </div>
           </div>
         </div>
-        <div class="np-track" id="npTrack">—</div>
-        <div class="np-artist" id="npArtist"></div>
-        <span class="np-source-tag" id="npSource">—</span>
-        <div class="transport">
-          <button class="t-btn sm" onclick="sendKey('PREV_TRACK')" title="Previous (←)">⏮</button>
-          <button class="t-btn play" id="playBtn" onclick="togglePlay()">▶</button>
-          <button class="t-btn sm" onclick="sendKey('NEXT_TRACK')" title="Next (→)">⏭</button>
-          <span class="t-spacer"></span>
-          <button class="t-btn util" id="repeatBtn" onclick="cycleRepeat()" title="Repeat">↺</button>
-          <button class="t-btn util" id="shuffleBtn" onclick="toggleShuffle()" title="Shuffle (S)">⇄</button>
-          <button class="t-btn util" onclick="sendKey('MUTE')" title="Mute (M)">🔇</button>
-          <button class="t-btn util" onclick="sendKey('POWER')" title="Power" style="font-size:11px">⏻</button>
-        </div>
-      </div>
 
-      <!-- Volume + Bass -->
-      <div class="two-col">
-        <div class="card">
-          <p class="card-label">Volume</p>
+        <!-- Volume + Bass -->
+        <div class="two-col">
+          <div class="card">
+            <p class="card-label">Volume</p>
+            <div class="slider-row">
+              <input type="range" id="volSlider" min="0" max="100" value="50"
+                oninput="onSlider(this,'volVal')" onchange="setVolume(this.value)" />
+              <span class="slider-value" id="volVal">—</span>
+            </div>
+          </div>
+          <div class="card">
+            <p class="card-label">Bass</p>
+            <div class="slider-row">
+              <input type="range" id="bassSlider" min="-9" max="9" value="0"
+                oninput="onSlider(this,'bassVal')" onchange="setBass(this.value)" />
+              <span class="slider-value" id="bassVal">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Group volume (visible when in zone) -->
+        <div class="group-vol-card" id="groupVolCard" style="display:none">
+          <div class="group-vol-header">
+            <span class="group-vol-title">🔊 Group volume</span>
+            <span class="group-vol-rooms" id="groupVolRooms"></span>
+          </div>
           <div class="slider-row">
-            <input type="range" id="volSlider" min="0" max="100" value="50" oninput="onSlider(this,'volVal')" onchange="setVolume(this.value)" />
-            <span class="slider-value" id="volVal">—</span>
+            <input type="range" id="groupVolSlider" min="0" max="100" value="50"
+              oninput="onSlider(this,'groupVolVal')" onchange="setGroupVolume(this.value)" />
+            <span class="slider-value" id="groupVolVal">50</span>
           </div>
         </div>
+
+        <!-- Presets -->
+        <div>
+          <p style="font-family:'Lora',serif;font-size:17px;color:var(--flax);margin-bottom:12px;font-weight:600">Presets</p>
+          <div class="presets-grid" id="presetsGrid"></div>
+        </div>
+
+        <!-- Sources -->
         <div class="card">
-          <p class="card-label">Bass</p>
-          <div class="slider-row">
-            <input type="range" id="bassSlider" min="-9" max="9" value="0" oninput="onSlider(this,'bassVal')" onchange="setBass(this.value)" />
-            <span class="slider-value" id="bassVal">—</span>
+          <p class="card-label">Sources</p>
+          <div class="sources-wrap" id="sourcesGrid"></div>
+        </div>
+
+        <!-- Zone -->
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <p class="card-label" style="margin-bottom:0">Multi-room</p>
+            <span id="zoneStatus" style="font-size:11px;color:var(--grain3)">No zone</span>
+          </div>
+          <div id="zoneMembers"></div>
+          <div class="zone-actions">
+            <button class="zone-btn" onclick="openZoneModal()">＋ Manage zone</button>
+            <button class="zone-btn everywhere" onclick="playEverywhere()">📡 All rooms</button>
           </div>
         </div>
-      </div>
 
-      <!-- Group Volume (shows when speakers are in a zone) -->
-      <div class="group-vol-card" id="groupVolCard" style="display:none">
-        <div class="group-vol-header">
-          <span class="group-vol-title">🔊 Group volume</span>
-          <span class="group-vol-speakers" id="groupVolSpeakers"></span>
-        </div>
-        <div class="slider-row">
-          <input type="range" id="groupVolSlider" min="0" max="100" value="50" oninput="onSlider(this,'groupVolVal')" onchange="setGroupVolume(this.value)" />
-          <span class="slider-value" id="groupVolVal">50</span>
-        </div>
       </div>
-
-      <!-- Presets -->
-      <div>
-        <p class="section-heading">Presets</p>
-        <div class="presets-grid" id="presetsGrid"></div>
-      </div>
-
-      <!-- Sources -->
-      <div class="card">
-        <p class="card-label">Sources</p>
-        <div class="sources-wrap" id="sourcesGrid"></div>
-      </div>
-
-      <!-- Zone -->
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
-          <p class="card-label" style="margin-bottom:0">Multi-room zone</p>
-          <div style="display:flex;gap:8px;align-items:center">
-            <span id="zoneStatus" style="font-size:11px;color:var(--grain3)">No active zone</span>
-            <button class="t-btn util" style="width:auto;border-radius:8px;padding:0 10px;font-size:11px;gap:5px;display:flex;align-items:center" onclick="playEverywhere()" title="Play everywhere">📡 All rooms</button>
-          </div>
-        </div>
-        <div id="zoneMembers"></div>
-        <button class="zone-add-btn" onclick="openZoneModal()">＋ Manage zone</button>
-      </div>
-
     </div>
-  </main>
+  </div>
+
+  <!-- Bottom nav -->
+  <nav class="bottom-nav" id="bottomNav"></nav>
+
 </div>
 
-<!-- Mobile bottom nav -->
-<nav class="mobile-nav" id="mobileNav"></nav>
-
-<!-- Add Speaker Modal -->
+<!-- Add Speaker Sheet -->
 <div class="modal-overlay" id="addModal">
   <div class="modal">
+    <div class="modal-handle"></div>
     <p class="modal-title">Add a speaker</p>
-    <div class="field"><label>Display name</label><input type="text" id="newName" placeholder="e.g. Master Bedroom" /></div>
-    <div class="field"><label>IP address</label><input type="text" id="newIP" placeholder="192.168.10.x" /></div>
+    <div class="field"><label>Display name</label><input type="text" id="newName" placeholder="e.g. Master Bedroom" autocomplete="off" /></div>
+    <div class="field"><label>IP address</label><input type="text" id="newIP" placeholder="192.168.10.x" inputmode="decimal" autocomplete="off" /></div>
     <div class="modal-btns">
       <button class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="addSpeaker()">Add speaker</button>
+      <button class="btn btn-primary" onclick="addSpeaker()">Add</button>
     </div>
   </div>
 </div>
 
-<!-- Zone Modal -->
+<!-- Zone Sheet -->
 <div class="modal-overlay" id="zoneModal">
-  <div class="modal" style="width:420px">
+  <div class="modal">
+    <div class="modal-handle"></div>
     <p class="modal-title">Manage zone</p>
-    <p style="font-size:13px;color:var(--grain3);margin-bottom:18px;line-height:1.6">Select speakers to group with this one. This speaker becomes the zone master.</p>
+    <p style="font-size:13px;color:var(--grain3);margin-bottom:18px;line-height:1.6">This speaker becomes the zone master. Select others to group with it.</p>
     <div id="zoneCheckList"></div>
     <div class="modal-btns">
       <button class="btn btn-ghost" onclick="closeZoneModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="applyZone()">Apply zone</button>
+      <button class="btn btn-primary" onclick="applyZone()">Apply</button>
     </div>
   </div>
 </div>
 
-<!-- Keyboard Shortcuts Overlay -->
-<div class="kb-overlay" id="kbOverlay">
-  <div class="kb-modal">
-    <p class="kb-title">Keyboard shortcuts</p>
-    <div class="kb-row"><span class="kb-desc">Play / Pause</span><span class="kb-key">Space</span></div>
-    <div class="kb-row"><span class="kb-desc">Next track</span><span class="kb-key">→</span></div>
-    <div class="kb-row"><span class="kb-desc">Previous track</span><span class="kb-key">←</span></div>
-    <div class="kb-row"><span class="kb-desc">Mute</span><span class="kb-key">M</span></div>
-    <div class="kb-row"><span class="kb-desc">Shuffle</span><span class="kb-key">S</span></div>
-    <div class="kb-row"><span class="kb-desc">Volume up</span><span class="kb-key">↑</span></div>
-    <div class="kb-row"><span class="kb-desc">Volume down</span><span class="kb-key">↓</span></div>
-    <div class="kb-row"><span class="kb-desc">This overlay</span><span class="kb-key">?</span></div>
-    <div class="kb-row"><span class="kb-desc">Close / Cancel</span><span class="kb-key">Esc</span></div>
-    <div class="modal-btns" style="margin-top:22px"><button class="btn btn-ghost" onclick="hideKbOverlay()">Close</button></div>
+<!-- Delete confirm sheet -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <p class="modal-title" id="deleteTitle">Remove speaker?</p>
+    <p style="font-size:14px;color:var(--grain3);line-height:1.6" id="deleteDesc"></p>
+    <div class="modal-btns" style="margin-top:24px">
+      <button class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn" style="background:var(--danger);color:#fff;flex:1" id="deleteConfirmBtn">Remove</button>
+    </div>
   </div>
 </div>
 
@@ -426,37 +665,31 @@
 <script>
 // ── State ──────────────────────────────────────────────────────────────────
 let speakers = [], activeSpeakerId = null, playState = 'STOP_STATE';
-let shuffleOn = false, repeatMode = 'off'; // off / one / all
+let shuffleOn = false, repeatMode = 'off';
 let vizTimer = null, progressTimer = null;
 let elapsedSec = 0, totalSec = 0;
-let currentZoneIds = []; // speaker IDs currently in active zone
+let currentZoneIds = [];
+let deleteTarget = null;
 
 const LAST_SPEAKER_KEY = 'st_last_speaker';
-
 const roomEmoji = {living:'🛋️',kitchen:'🍳',bed:'🛏️',bath:'🚿',office:'💻',study:'📚',gym:'💪',garage:'🚗',sewing:'🧵',patio:'🌿',deck:'🌿',dining:'🍽️',music:'🎵',media:'📺'};
 function getEmoji(n){const l=n.toLowerCase();for(const[k,v] of Object.entries(roomEmoji))if(l.includes(k))return v;return'🔊';}
 
 function onSlider(el, valId) {
   document.getElementById(valId).textContent = el.value;
-  const pct = ((el.value - el.min) / (el.max - el.min) * 100).toFixed(1) + '%';
-  el.style.setProperty('--pct', pct);
+  el.style.setProperty('--pct', ((el.value-el.min)/(el.max-el.min)*100).toFixed(1)+'%');
 }
 
-function fmtTime(sec) {
-  sec = Math.max(0, Math.floor(sec));
-  return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
-}
+function fmtTime(s){s=Math.max(0,Math.floor(s));return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
 
 // ── Init ───────────────────────────────────────────────────────────────────
 async function init() {
   const r = await fetch('/api/speakers');
   speakers = await r.json();
-  renderSidebar();
-  renderMobileNav();
+  renderNav();
   connectSSE();
-  // Poll every 10s as fallback for missed WebSocket events
-  setInterval(pollActive, 10000);
-  // Restore last selected speaker
+  // Aggressive polling — 2s on fast network
+  setInterval(pollActive, 2000);
   const last = localStorage.getItem(LAST_SPEAKER_KEY);
   if (last && speakers.find(s => s.id === last)) selectSpeaker(last);
 }
@@ -465,7 +698,8 @@ async function pollActive() {
   if (!activeSpeakerId) return;
   try {
     const r = await fetch(`/api/${activeSpeakerId}/now_playing`);
-    renderNP((await r.json()).nowPlaying);
+    const d = await r.json();
+    renderNP(d.nowPlaying);
   } catch (_) {}
 }
 
@@ -473,75 +707,65 @@ async function pollActive() {
 function connectSSE() {
   const es = new EventSource('/api/events');
   es.addEventListener('speakerUpdate', e => {
-    const { speakerId, data } = JSON.parse(e.data);
+    const {speakerId, data} = JSON.parse(e.data);
     if (speakerId === activeSpeakerId) handleUpdate(data);
     markOnline(speakerId);
   });
   es.addEventListener('speakerOnline',  e => markOnline(JSON.parse(e.data).speakerId));
   es.addEventListener('speakerOffline', e => markOffline(JSON.parse(e.data).speakerId));
-  es.onerror = () => setTimeout(connectSSE, 4000);
+  es.onerror = () => setTimeout(connectSSE, 2000);
 }
 
 function markOnline(id) {
-  const d = document.querySelector(`[data-sid="${id}"] .status-dot`);
-  if (d) { d.classList.add('online'); d.nextSibling.textContent = 'Online'; }
+  const dot = document.querySelector(`[data-sid="${id}"] .nav-dot`);
+  if (dot) dot.classList.add('online');
   if (id === activeSpeakerId) document.getElementById('offlineBanner').classList.remove('visible');
 }
 
 function markOffline(id) {
-  const d = document.querySelector(`[data-sid="${id}"] .status-dot`);
-  if (d) { d.classList.remove('online'); d.nextSibling.textContent = 'Offline'; }
+  const dot = document.querySelector(`[data-sid="${id}"] .nav-dot`);
+  if (dot) dot.classList.remove('online');
   if (id === activeSpeakerId) document.getElementById('offlineBanner').classList.add('visible');
 }
 
 function handleUpdate(data) {
   if (data.nowPlaying) renderNP(data.nowPlaying);
   if (data.volume) syncVol(data.volume);
-  // Update sidebar zone tags if zone data arrives
-  if (data.zone) updateZoneSidebar(data.zone);
 }
 
-// ── Sidebar ────────────────────────────────────────────────────────────────
-function renderSidebar() {
-  document.getElementById('speakerList').innerHTML = speakers.map(s => `
-    <div class="speaker-item${s.id === activeSpeakerId ? ' active' : ''}" data-sid="${s.id}" onclick="selectSpeaker('${s.id}')">
-      <div class="speaker-avatar">${getEmoji(s.name)}</div>
-      <div class="speaker-info">
-        <div class="speaker-name">${s.name}</div>
-        <div class="speaker-status"><span class="status-dot"></span><span>Connecting…</span></div>
-      </div>
-      <button class="speaker-delete" onclick="deleteSpeaker(event,'${s.id}')">✕</button>
-    </div>`).join('');
-}
-
-function renderMobileNav() {
-  document.getElementById('mobileNav').innerHTML = speakers.map(s => `
-    <button class="mobile-nav-item${s.id === activeSpeakerId ? ' active' : ''}" onclick="selectSpeaker('${s.id}')">
+// ── Nav ────────────────────────────────────────────────────────────────────
+function renderNav() {
+  document.getElementById('bottomNav').innerHTML = speakers.map(s => `
+    <button class="nav-item${s.id === activeSpeakerId ? ' active' : ''}" data-sid="${s.id}"
+      onclick="selectSpeaker('${s.id}')" oncontextmenu="longPress(event,'${s.id}')">
+      <span class="nav-dot"></span>
       <span class="nav-emoji">${getEmoji(s.name)}</span>
-      <span>${s.name.split(' ')[0]}</span>
+      <span>${s.name.split(' ').slice(0,2).join(' ')}</span>
     </button>`).join('');
 }
 
-function updateZoneSidebar(zone) {
-  // Mark zone members in sidebar
+function longPress(e, id) {
+  e.preventDefault();
+  openDeleteModal(id);
 }
 
 // ── Speaker Selection ──────────────────────────────────────────────────────
 async function selectSpeaker(id) {
   activeSpeakerId = id;
   localStorage.setItem(LAST_SPEAKER_KEY, id);
-  renderSidebar();
-  renderMobileNav();
+  renderNav();
   document.getElementById('emptyState').style.display = 'none';
   document.getElementById('offlineBanner').classList.remove('visible');
   const sd = document.getElementById('speakerDetail');
-  sd.style.display = 'flex'; sd.style.flexDirection = 'column'; sd.style.gap = '22px';
+  sd.style.display = 'flex'; sd.style.flexDirection = 'column'; sd.style.gap = '14px';
+  document.getElementById('scrollArea').scrollTo({ top: 0, behavior: 'smooth' });
+  // Parallel fetch everything
   await Promise.all([fetchNP(), fetchVol(), fetchBass(), fetchPresets(), fetchSources(), fetchZone()]);
 }
 
 // ── Now Playing ────────────────────────────────────────────────────────────
 async function fetchNP() {
-  try { const r = await fetch(`/api/${activeSpeakerId}/now_playing`); renderNP((await r.json()).nowPlaying); }
+  try { renderNP((await (await fetch(`/api/${activeSpeakerId}/now_playing`)).json()).nowPlaying); }
   catch (_) {}
 }
 
@@ -557,24 +781,36 @@ function renderNP(np) {
   document.getElementById('badgePulse').className = 'badge-pulse' + (playing ? '' : ' off');
   document.getElementById('badgeText').textContent = playing ? 'Now playing' : 'Stopped';
 
-  // Album art
-  const artEl = document.getElementById('npArt');
+  // Album art — full-width banner
+  const banner = document.getElementById('npArtBanner');
+  const placeholder = document.getElementById('npArtPlaceholder');
   const artUrl = np.art?._ || (typeof np.art === 'string' ? np.art : null);
+  // Remove old img if any
+  const oldImg = banner.querySelector('img');
   if (artUrl && artUrl.startsWith('http')) {
-    artEl.innerHTML = `<img src="${artUrl}" alt="Album art" onerror="this.parentElement.innerHTML='🎵'" />`;
+    if (!oldImg || oldImg.src !== artUrl) {
+      if (oldImg) oldImg.remove();
+      const img = document.createElement('img');
+      img.src = artUrl;
+      img.alt = 'Album art';
+      img.onerror = () => { img.remove(); if (placeholder) placeholder.style.display = ''; };
+      if (placeholder) placeholder.style.display = 'none';
+      banner.insertBefore(img, banner.firstChild);
+    }
   } else {
-    artEl.innerHTML = '🎵';
+    if (oldImg) oldImg.remove();
+    if (placeholder) placeholder.style.display = '';
   }
 
   // Progress bar
   const elapsed = parseInt(np.elapsedTime || np.position || 0);
-  const total   = parseInt(np.totalTime || np.duration || 0);
+  const total   = parseInt(np.totalTime   || np.duration  || 0);
   const progEl  = document.getElementById('npProgress');
   if (total > 0) {
     elapsedSec = elapsed; totalSec = total;
     document.getElementById('progressElapsed').textContent = fmtTime(elapsed);
     document.getElementById('progressTotal').textContent   = fmtTime(total);
-    document.getElementById('progressFill').style.width    = ((elapsed / total) * 100).toFixed(1) + '%';
+    document.getElementById('progressFill').style.width    = ((elapsed/total)*100).toFixed(1)+'%';
     progEl.classList.add('visible');
     startProgressTimer(playing);
   } else {
@@ -582,53 +818,49 @@ function renderNP(np) {
     stopProgressTimer();
   }
 
-  // Active preset highlight
+  // Active preset
   document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-  const activePreset = np.ContentItem?.$.location;
-  if (activePreset) {
-    document.querySelectorAll('.preset-btn[data-location]').forEach(b => {
-      if (b.dataset.location === activePreset) b.classList.add('active');
-    });
-  }
+  const loc = np.ContentItem?.$.location;
+  if (loc) document.querySelectorAll(`[data-location="${loc}"]`).forEach(b => b.classList.add('active'));
 
   playing ? startViz() : stopViz();
 }
 
-// ── Progress timer ─────────────────────────────────────────────────────────
+// ── Progress ───────────────────────────────────────────────────────────────
 function startProgressTimer(playing) {
   stopProgressTimer();
   if (!playing || totalSec <= 0) return;
   progressTimer = setInterval(() => {
     elapsedSec = Math.min(elapsedSec + 1, totalSec);
     document.getElementById('progressElapsed').textContent = fmtTime(elapsedSec);
-    document.getElementById('progressFill').style.width    = ((elapsedSec / totalSec) * 100).toFixed(1) + '%';
+    document.getElementById('progressFill').style.width    = ((elapsedSec/totalSec)*100).toFixed(1)+'%';
     if (elapsedSec >= totalSec) stopProgressTimer();
   }, 1000);
 }
 function stopProgressTimer() { clearInterval(progressTimer); progressTimer = null; }
 
-// ── Visualizer ─────────────────────────────────────────────────────────────
+// ── Viz ────────────────────────────────────────────────────────────────────
 function startViz() {
   if (vizTimer) return;
   const bars = document.querySelectorAll('.viz-bar');
   vizTimer = setInterval(() => {
-    bars.forEach(b => { b.style.height = (10 + Math.random() * 90) + '%'; b.style.opacity = (0.3 + Math.random() * 0.7).toFixed(2); });
-  }, 200);
+    bars.forEach(b => { b.style.height=(10+Math.random()*88)+'%'; b.style.opacity=(0.3+Math.random()*0.7).toFixed(2); });
+  }, 180);
 }
 function stopViz() {
   clearInterval(vizTimer); vizTimer = null;
-  document.querySelectorAll('.viz-bar').forEach(b => { b.style.height = '12%'; b.style.opacity = '0.2'; });
+  document.querySelectorAll('.viz-bar').forEach(b => { b.style.height='12%'; b.style.opacity='0.2'; });
 }
 
 // ── Transport ──────────────────────────────────────────────────────────────
 async function sendKey(key) {
   try {
-    await fetch(`/api/${activeSpeakerId}/key`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ key }) });
-    setTimeout(fetchNP, 600);
-  } catch (_) { toast('Could not send command', 'error'); }
+    await fetch(`/api/${activeSpeakerId}/key`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key})});
+    setTimeout(fetchNP, 400);
+  } catch (_) { toast('Could not reach speaker','error'); }
 }
 
-function togglePlay() { sendKey(playState === 'PLAY_STATE' ? 'PAUSE' : 'PLAY'); }
+function togglePlay() { sendKey(playState==='PLAY_STATE'?'PAUSE':'PLAY'); }
 
 function toggleShuffle() {
   shuffleOn = !shuffleOn;
@@ -636,11 +868,9 @@ function toggleShuffle() {
   document.getElementById('shuffleBtn').classList.toggle('active', shuffleOn);
 }
 
-const repeatModes = ['off', 'one', 'all'];
-const repeatKeys  = { off: 'REPEAT_OFF', one: 'REPEAT_ONE', all: 'REPEAT_ALL' };
-const repeatIcons = { off: '↺', one: '🔂', all: '🔁' };
+const repeatModes=['off','one','all'], repeatKeys={off:'REPEAT_OFF',one:'REPEAT_ONE',all:'REPEAT_ALL'}, repeatIcons={off:'↺',one:'🔂',all:'🔁'};
 function cycleRepeat() {
-  repeatMode = repeatModes[(repeatModes.indexOf(repeatMode) + 1) % repeatModes.length];
+  repeatMode = repeatModes[(repeatModes.indexOf(repeatMode)+1)%repeatModes.length];
   sendKey(repeatKeys[repeatMode]);
   const btn = document.getElementById('repeatBtn');
   btn.textContent = repeatIcons[repeatMode];
@@ -649,235 +879,203 @@ function cycleRepeat() {
 
 // ── Volume ─────────────────────────────────────────────────────────────────
 async function fetchVol() {
-  try { const r = await fetch(`/api/${activeSpeakerId}/volume`); syncVol((await r.json()).volume); }
-  catch (_) {}
+  try { syncVol((await (await fetch(`/api/${activeSpeakerId}/volume`)).json()).volume); } catch (_) {}
 }
-
 function syncVol(vol) {
   if (!vol) return;
   const v = parseInt(vol.actualvolume ?? vol.targetvolume ?? 50);
-  const el = document.getElementById('volSlider');
-  el.value = v; onSlider(el, 'volVal');
-  // Also sync group slider to current if no zone
-  if (!currentZoneIds.length) {
-    const gv = document.getElementById('groupVolSlider');
-    gv.value = v; onSlider(gv, 'groupVolVal');
-  }
+  const el = document.getElementById('volSlider'); el.value=v; onSlider(el,'volVal');
 }
-
 async function setVolume(v) {
-  await fetch(`/api/${activeSpeakerId}/volume`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ volume: parseInt(v) }) });
+  await fetch(`/api/${activeSpeakerId}/volume`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({volume:parseInt(v)})});
 }
-
 async function setGroupVolume(v) {
-  await fetch('/api/group-volume', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ ids: currentZoneIds, volume: parseInt(v) }) });
+  await fetch('/api/group-volume',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:currentZoneIds,volume:parseInt(v)})});
 }
 
 // ── Bass ───────────────────────────────────────────────────────────────────
 async function fetchBass() {
   try {
-    const r = await fetch(`/api/${activeSpeakerId}/bass`);
-    const d = await r.json();
+    const d = await (await fetch(`/api/${activeSpeakerId}/bass`)).json();
     const v = parseInt(d.bass?.actualbass ?? d.bass?.targetbass ?? 0);
-    const el = document.getElementById('bassSlider');
-    el.value = v; onSlider(el, 'bassVal');
+    const el = document.getElementById('bassSlider'); el.value=v; onSlider(el,'bassVal');
   } catch (_) {}
 }
 async function setBass(v) {
-  await fetch(`/api/${activeSpeakerId}/bass`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ bass: parseInt(v) }) });
+  await fetch(`/api/${activeSpeakerId}/bass`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bass:parseInt(v)})});
 }
 
 // ── Presets ────────────────────────────────────────────────────────────────
 async function fetchPresets() {
   const g = document.getElementById('presetsGrid');
   try {
-    const r = await fetch(`/api/${activeSpeakerId}/presets`);
-    const d = await r.json();
-    let list = d.presets?.preset || []; if (!Array.isArray(list)) list = [list];
-    const map = {}; list.forEach(p => { if (p?.$?.id) map[p.$.id] = p; });
-    g.innerHTML = '';
-    for (let i = 1; i <= 6; i++) {
-      const p = map[i];
-      const name = p?.ContentItem?.$.itemName || p?.ContentItem?._ || '';
-      const location = p?.ContentItem?.$.location || '';
-      const btn = document.createElement('button');
-      btn.className = `preset-btn${p ? '' : ' empty'}`;
-      if (location) btn.dataset.location = location;
-      btn.innerHTML = `<span class="preset-num">${i}</span><span class="preset-name">${name || '—'}</span>`;
-      if (p) btn.onclick = () => playPreset(p.ContentItem);
+    const d = await (await fetch(`/api/${activeSpeakerId}/presets`)).json();
+    let list = d.presets?.preset||[]; if(!Array.isArray(list))list=[list];
+    const map={}; list.forEach(p=>{if(p?.$?.id)map[p.$.id]=p;});
+    g.innerHTML='';
+    for(let i=1;i<=6;i++){
+      const p=map[i], name=p?.ContentItem?.$.itemName||p?.ContentItem?._||'', loc=p?.ContentItem?.$.location||'';
+      const btn=document.createElement('button');
+      btn.className=`preset-btn${p?'':' empty'}`;
+      if(loc) btn.dataset.location=loc;
+      btn.innerHTML=`<span class="preset-num">${i}</span><span class="preset-name">${name||'—'}</span>`;
+      if(p) btn.onclick=()=>playPreset(p.ContentItem);
       g.appendChild(btn);
     }
-  } catch (_) {
-    g.innerHTML = Array.from({length:6}, (_,i) => `<button class="preset-btn empty"><span class="preset-num">${i+1}</span><span class="preset-name">—</span></button>`).join('');
+  } catch(_){
+    g.innerHTML=Array.from({length:6},(_,i)=>`<button class="preset-btn empty"><span class="preset-num">${i+1}</span><span class="preset-name">—</span></button>`).join('');
   }
 }
-
 async function playPreset(ci) {
-  await fetch(`/api/${activeSpeakerId}/select`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ ContentItem: ci }) });
-  setTimeout(fetchNP, 800);
+  await fetch(`/api/${activeSpeakerId}/select`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ContentItem:ci})});
+  setTimeout(fetchNP, 500);
 }
 
 // ── Sources ────────────────────────────────────────────────────────────────
 async function fetchSources() {
   const g = document.getElementById('sourcesGrid');
   try {
-    const r = await fetch(`/api/${activeSpeakerId}/sources`);
-    const d = await r.json();
-    let items = d.sources?.sourceItem || []; if (!Array.isArray(items)) items = [items];
-    g.innerHTML = '';
-    items.forEach(item => {
-      if (!item || item.$.status !== 'READY') return;
-      const chip = document.createElement('button'); chip.className = 'source-chip';
-      chip.textContent = item._ || item.$.source;
-      chip.onclick = () => { document.querySelectorAll('.source-chip').forEach(c => c.classList.remove('active')); chip.classList.add('active'); selectSource(item); };
+    const d = await (await fetch(`/api/${activeSpeakerId}/sources`)).json();
+    let items = d.sources?.sourceItem||[]; if(!Array.isArray(items))items=[items];
+    g.innerHTML='';
+    items.forEach(item=>{
+      if(!item||item.$.status!=='READY')return;
+      const chip=document.createElement('button'); chip.className='source-chip';
+      chip.textContent=item._||item.$.source;
+      chip.onclick=()=>{document.querySelectorAll('.source-chip').forEach(c=>c.classList.remove('active'));chip.classList.add('active');selectSource(item);};
       g.appendChild(chip);
     });
-    if (!g.innerHTML) g.innerHTML = '<span style="font-size:13px;color:var(--grain3)">No sources available</span>';
-  } catch (_) { g.innerHTML = '<span style="font-size:13px;color:var(--grain3)">Could not load sources</span>'; }
+    if(!g.innerHTML) g.innerHTML='<span style="font-size:13px;color:var(--grain3)">No sources available</span>';
+  } catch(_){ g.innerHTML='<span style="font-size:13px;color:var(--grain3)">Could not load sources</span>'; }
 }
-
 async function selectSource(item) {
-  await fetch(`/api/${activeSpeakerId}/select`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ ContentItem: item }) });
-  setTimeout(fetchNP, 800);
+  await fetch(`/api/${activeSpeakerId}/select`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ContentItem:item})});
+  setTimeout(fetchNP, 500);
 }
 
 // ── Zone ───────────────────────────────────────────────────────────────────
 async function fetchZone() {
-  const el = document.getElementById('zoneMembers'), st = document.getElementById('zoneStatus');
-  const gcCard = document.getElementById('groupVolCard');
+  const el=document.getElementById('zoneMembers'), st=document.getElementById('zoneStatus'), gc=document.getElementById('groupVolCard');
   try {
-    const r = await fetch(`/api/${activeSpeakerId}/zone`);
-    const d = await r.json(); const zone = d.zone;
-    if (!zone?.member) {
-      st.textContent = 'No active zone';
-      el.innerHTML = '<div class="zone-empty">This speaker is not grouped with others.</div>';
-      currentZoneIds = [];
-      gcCard.style.display = 'none';
-      return;
+    const d=await(await fetch(`/api/${activeSpeakerId}/zone`)).json(), zone=d.zone;
+    if(!zone?.member){
+      st.textContent='No zone'; el.innerHTML='<div class="zone-empty">Not grouped with any speaker.</div>';
+      currentZoneIds=[]; gc.style.display='none'; return;
     }
-    let members = zone.member; if (!Array.isArray(members)) members = [members];
-    currentZoneIds = members.map(m => { const spk = speakers.find(s => s.ip === m.$.ipaddress); return spk?.id; }).filter(Boolean);
-    st.textContent = `${members.length} speaker${members.length !== 1 ? 's' : ''} grouped`;
-
-    // Group volume card
-    const zoneSpkNames = currentZoneIds.map(id => speakers.find(s => s.id === id)?.name).filter(Boolean);
-    document.getElementById('groupVolSpeakers').textContent = zoneSpkNames.join(' · ');
-    const gv = document.getElementById('groupVolSlider');
-    const curVol = parseInt(document.getElementById('volSlider').value);
-    gv.value = curVol; onSlider(gv, 'groupVolVal');
-    gcCard.style.display = 'block';
-
-    el.innerHTML = members.map(m => {
-      const spk = speakers.find(s => s.ip === m.$.ipaddress) || { name: m.$.ipaddress };
-      const isMaster = m._ === zone.$.master;
-      return `<div class="zone-member-item">
-        <div class="zone-avatar">${getEmoji(spk.name)}</div>
-        <span class="zone-name">${spk.name}</span>
-        <span class="zone-pill ${isMaster ? 'master' : 'slave'}">${isMaster ? 'Master' : 'Slave'}</span>
-        ${!isMaster ? '<button class="zone-remove" title="Remove from zone">✕</button>' : ''}
-      </div>`;
+    let members=zone.member; if(!Array.isArray(members))members=[members];
+    currentZoneIds=members.map(m=>speakers.find(s=>s.ip===m.$.ipaddress)?.id).filter(Boolean);
+    st.textContent=`${members.length} speakers`;
+    const names=currentZoneIds.map(id=>speakers.find(s=>s.id===id)?.name).filter(Boolean);
+    document.getElementById('groupVolRooms').textContent=names.join(' · ');
+    const curVol=parseInt(document.getElementById('volSlider').value);
+    const gv=document.getElementById('groupVolSlider'); gv.value=curVol; onSlider(gv,'groupVolVal');
+    gc.style.display='block';
+    el.innerHTML=members.map(m=>{
+      const spk=speakers.find(s=>s.ip===m.$.ipaddress)||{name:m.$.ipaddress};
+      const isMaster=m._===zone.$.master;
+      return`<div class="zone-member-item"><div class="zone-avatar">${getEmoji(spk.name)}</div><span class="zone-name">${spk.name}</span><span class="zone-pill ${isMaster?'master':'slave'}">${isMaster?'Master':'Slave'}</span></div>`;
     }).join('');
-  } catch (_) { el.innerHTML = '<div class="zone-empty">Could not load zone info.</div>'; }
+  } catch(_){ el.innerHTML='<div class="zone-empty">Could not load zone.</div>'; }
 }
 
 function openZoneModal() {
-  document.getElementById('zoneCheckList').innerHTML = speakers.filter(s => s.id !== activeSpeakerId).map(s => `
+  document.getElementById('zoneCheckList').innerHTML=speakers.filter(s=>s.id!==activeSpeakerId).map(s=>`
     <label class="zone-check-item">
-      <input type="checkbox" data-id="${s.id}" data-ip="${s.ip}" ${currentZoneIds.includes(s.id) ? 'checked' : ''} />
-      <span style="font-size:18px">${getEmoji(s.name)}</span>
+      <input type="checkbox" data-id="${s.id}" data-ip="${s.ip}" ${currentZoneIds.includes(s.id)?'checked':''}/>
+      <span style="font-size:20px">${getEmoji(s.name)}</span>
       <span class="zone-check-name">${s.name}</span>
       <span class="zone-check-ip">${s.ip}</span>
-    </label>`).join('') || '<p style="color:var(--grain3);font-size:13px">No other speakers available.</p>';
+    </label>`).join('')||'<p style="color:var(--grain3);font-size:14px">No other speakers available.</p>';
   document.getElementById('zoneModal').classList.add('open');
 }
-function closeZoneModal() { document.getElementById('zoneModal').classList.remove('open'); }
+function closeZoneModal(){ document.getElementById('zoneModal').classList.remove('open'); }
 
 async function applyZone() {
-  const checked = [...document.querySelectorAll('#zoneCheckList input:checked')];
-  if (!checked.length) { toast('Select at least one speaker', 'error'); return; }
-  const infoD = await (await fetch(`/api/${activeSpeakerId}/info`)).json();
-  const masterDeviceId = infoD.info?.$.deviceID || '';
-  const slaves = await Promise.all(checked.map(async cb => {
-    const spk = speakers.find(s => s.id === cb.dataset.id);
-    const d = await (await fetch(`/api/${spk.id}/info`)).json();
-    return { ip: spk.ip, deviceId: d.info?.$.deviceID || '' };
+  const checked=[...document.querySelectorAll('#zoneCheckList input:checked')];
+  if(!checked.length){toast('Select at least one speaker','error');return;}
+  const infoD=await(await fetch(`/api/${activeSpeakerId}/info`)).json();
+  const masterDeviceId=infoD.info?.$.deviceID||'';
+  const slaves=await Promise.all(checked.map(async cb=>{
+    const spk=speakers.find(s=>s.id===cb.dataset.id);
+    const d=await(await fetch(`/api/${spk.id}/info`)).json();
+    return{ip:spk.ip,deviceId:d.info?.$.deviceID||''};
   }));
-  await fetch(`/api/${activeSpeakerId}/setZone`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ masterDeviceId, slaves }) });
-  closeZoneModal();
-  toast('Zone created', 'success');
-  setTimeout(fetchZone, 1000);
+  await fetch(`/api/${activeSpeakerId}/setZone`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({masterDeviceId,slaves})});
+  closeZoneModal(); toast('Zone created','success'); setTimeout(fetchZone,1000);
 }
 
 async function playEverywhere() {
+  if(!activeSpeakerId){toast('Select a speaker first','error');return;}
   try {
-    const r = await fetch(`/api/${activeSpeakerId}/play-everywhere`, { method: 'POST' });
-    const d = await r.json();
-    toast(`Playing in all ${d.slaveCount + 1} rooms`, 'success');
-    setTimeout(fetchZone, 1200);
-  } catch (_) { toast('Could not create zone', 'error'); }
+    const d=await(await fetch(`/api/${activeSpeakerId}/play-everywhere`,{method:'POST'})).json();
+    toast(`Playing in all ${d.slaveCount+1} rooms`,'success');
+    setTimeout(fetchZone,1200);
+  } catch(_){ toast('Could not create zone','error'); }
 }
 
-// ── Speaker management ─────────────────────────────────────────────────────
-function openAddModal() { document.getElementById('addModal').classList.add('open'); }
-function closeAddModal() { document.getElementById('addModal').classList.remove('open'); }
+// ── Speaker Management ─────────────────────────────────────────────────────
+function openAddModal(){ document.getElementById('addModal').classList.add('open'); }
+function closeAddModal(){ document.getElementById('addModal').classList.remove('open'); }
 
 async function addSpeaker() {
-  const name = document.getElementById('newName').value.trim();
-  const ip   = document.getElementById('newIP').value.trim();
-  if (!name || !ip) { toast('Name and IP are required', 'error'); return; }
-  const spk = await (await fetch('/api/speakers', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name, ip }) })).json();
-  speakers.push(spk); renderSidebar(); renderMobileNav(); closeAddModal();
-  document.getElementById('newName').value = ''; document.getElementById('newIP').value = '';
-  toast(`${name} added`, 'success');
+  const name=document.getElementById('newName').value.trim(), ip=document.getElementById('newIP').value.trim();
+  if(!name||!ip){toast('Name and IP required','error');return;}
+  const spk=await(await fetch('/api/speakers',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,ip})})).json();
+  speakers.push(spk); renderNav(); closeAddModal();
+  document.getElementById('newName').value=''; document.getElementById('newIP').value='';
+  toast(`${name} added`,'success');
 }
 
-async function deleteSpeaker(e, id) {
-  e.stopPropagation();
-  const spk = speakers.find(s => s.id === id);
-  if (!confirm(`Remove "${spk?.name}"?`)) return;
-  await fetch(`/api/speakers/${id}`, { method: 'DELETE' });
-  speakers = speakers.filter(s => s.id !== id);
-  if (activeSpeakerId === id) {
-    activeSpeakerId = null;
-    document.getElementById('emptyState').style.display = '';
-    document.getElementById('speakerDetail').style.display = 'none';
+function openDeleteModal(id) {
+  const spk=speakers.find(s=>s.id===id); if(!spk)return;
+  deleteTarget=id;
+  document.getElementById('deleteTitle').textContent=`Remove ${spk.name}?`;
+  document.getElementById('deleteDesc').textContent=`${spk.name} (${spk.ip}) will be removed from the app. It won't affect the speaker itself.`;
+  document.getElementById('deleteConfirmBtn').onclick=()=>confirmDelete();
+  document.getElementById('deleteModal').classList.add('open');
+}
+function closeDeleteModal(){ document.getElementById('deleteModal').classList.remove('open'); deleteTarget=null; }
+
+async function confirmDelete() {
+  if(!deleteTarget)return;
+  const id=deleteTarget, spk=speakers.find(s=>s.id===id);
+  await fetch(`/api/speakers/${id}`,{method:'DELETE'});
+  speakers=speakers.filter(s=>s.id!==id);
+  if(activeSpeakerId===id){
+    activeSpeakerId=null;
+    document.getElementById('emptyState').style.display='';
+    document.getElementById('speakerDetail').style.display='none';
     stopViz(); stopProgressTimer();
+    localStorage.removeItem(LAST_SPEAKER_KEY);
   }
-  renderSidebar(); renderMobileNav();
-  toast(`${spk?.name} removed`, 'success');
+  renderNav(); closeDeleteModal(); toast(`${spk?.name} removed`,'success');
 }
-
-// ── Keyboard shortcuts overlay ─────────────────────────────────────────────
-function showKbOverlay() { document.getElementById('kbOverlay').classList.add('open'); }
-function hideKbOverlay() { document.getElementById('kbOverlay').classList.remove('open'); }
 
 // ── Toasts ─────────────────────────────────────────────────────────────────
-function toast(msg, type = 'success') {
-  const t = document.createElement('div'); t.className = `toast ${type}`;
-  t.innerHTML = `<span class="toast-icon">${type === 'success' ? '✓' : '!'}</span>${msg}`;
+function toast(msg,type='success'){
+  const t=document.createElement('div'); t.className=`toast ${type}`;
+  t.innerHTML=`<span class="toast-icon">${type==='success'?'✓':'!'}</span>${msg}`;
   document.getElementById('toasts').appendChild(t);
-  setTimeout(() => t.remove(), 3200);
+  setTimeout(()=>t.remove(),3200);
 }
 
-// ── Keyboard shortcuts ─────────────────────────────────────────────────────
-document.addEventListener('keydown', e => {
-  if (document.getElementById('kbOverlay').classList.contains('open')) { if (e.key === 'Escape') hideKbOverlay(); return; }
-  if (e.target.tagName === 'INPUT') return;
-  if (e.key === '?') { showKbOverlay(); return; }
-  if (e.key === 'Escape') { closeAddModal(); closeZoneModal(); return; }
-  if (!activeSpeakerId) return;
-  if (e.code === 'Space')       { e.preventDefault(); togglePlay(); }
-  if (e.code === 'ArrowRight')  sendKey('NEXT_TRACK');
-  if (e.code === 'ArrowLeft')   sendKey('PREV_TRACK');
-  if (e.code === 'ArrowUp')     { e.preventDefault(); const sl = document.getElementById('volSlider'); sl.value = Math.min(100, parseInt(sl.value)+5); onSlider(sl,'volVal'); setVolume(sl.value); }
-  if (e.code === 'ArrowDown')   { e.preventDefault(); const sl = document.getElementById('volSlider'); sl.value = Math.max(0,   parseInt(sl.value)-5); onSlider(sl,'volVal'); setVolume(sl.value); }
-  if (e.code === 'KeyM')        sendKey('MUTE');
-  if (e.code === 'KeyS')        toggleShuffle();
+// ── Close sheets on backdrop tap ───────────────────────────────────────────
+['addModal','zoneModal','deleteModal'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open');});
 });
 
-// Close modals on backdrop click
-['addModal','zoneModal'].forEach(id => {
-  document.getElementById(id).addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('open'); });
+// ── Keyboard (tablet with keyboard) ───────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT')return;
+  if(e.key==='Escape'){['addModal','zoneModal','deleteModal'].forEach(id=>document.getElementById(id).classList.remove('open'));return;}
+  if(!activeSpeakerId)return;
+  if(e.code==='Space'){e.preventDefault();togglePlay();}
+  if(e.code==='ArrowRight') sendKey('NEXT_TRACK');
+  if(e.code==='ArrowLeft')  sendKey('PREV_TRACK');
+  if(e.code==='KeyM')       sendKey('MUTE');
+  if(e.code==='KeyS')       toggleShuffle();
+  if(e.code==='ArrowUp'){e.preventDefault();const sl=document.getElementById('volSlider');sl.value=Math.min(100,parseInt(sl.value)+5);onSlider(sl,'volVal');setVolume(sl.value);}
+  if(e.code==='ArrowDown'){e.preventDefault();const sl=document.getElementById('volSlider');sl.value=Math.max(0,parseInt(sl.value)-5);onSlider(sl,'volVal');setVolume(sl.value);}
 });
 
 init();
