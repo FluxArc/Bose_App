@@ -99,6 +99,15 @@ app.get('/api/events', (req, res) => {
   res.flushHeaders();
   sseClients.add(res);
   res.write(': connected\n\n');
+
+  // immediately tell the browser which speakers are already connected
+  speakers.forEach(s => {
+    if (speakerWSMap.has(s.id)) {
+      const payload = `event: speakerOnline\ndata: ${JSON.stringify({ speakerId: s.id })}\n\n`;
+      res.write(payload);
+    }
+  });
+
   req.on('close', () => sseClients.delete(res));
 });
 
