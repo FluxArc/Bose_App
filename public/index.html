@@ -44,15 +44,8 @@
     }
 
     html { height: 100%; overflow: hidden; }
+    body { height: 100%; background: var(--walnut); color: var(--flax); font-family: 'Inter', sans-serif; font-size: 15px; -webkit-font-smoothing: antialiased; overflow: hidden; }
 
-    body {
-      height: 100%; background: var(--walnut);
-      color: var(--flax); font-family: 'Inter', sans-serif;
-      font-size: 15px; -webkit-font-smoothing: antialiased;
-      overflow: hidden;
-    }
-
-    /* Wood grain */
     body::before {
       content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.022;
       background-image: repeating-linear-gradient(92deg,
@@ -61,7 +54,6 @@
         transparent 12px,transparent 23px,rgba(255,220,160,0.5) 23px,rgba(255,220,160,0.5) 24px);
     }
 
-    /* ── App shell ── */
     .app {
       position: fixed; inset: 0;
       display: grid;
@@ -74,409 +66,245 @@
     /* ── Header ── */
     .header {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 18px;
-      background: var(--walnut2);
+      padding: 0 18px; background: var(--walnut2);
       border-bottom: 1px solid var(--border2);
-      box-shadow: var(--shadow-inset);
-      position: relative; z-index: 10;
+      box-shadow: var(--shadow-inset); position: relative; z-index: 10;
     }
-
     .header-left { display: flex; align-items: center; gap: 10px; }
+    .wm-icon { width: 32px; height: 32px; border-radius: 9px; background: linear-gradient(135deg, var(--amber) 0%, #b86a20 100%); display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 2px 8px rgba(212,132,58,0.35); flex-shrink: 0; }
+    .wm-text { font-family: 'Lora', serif; font-size: 18px; color: var(--parchment); font-weight: 600; letter-spacing: -0.2px; }
+    .header-right { display: flex; gap: 8px; }
+    .hdr-btn { width: 38px; height: 38px; border-radius: 10px; background: var(--walnut3); border: 1px solid var(--border); color: var(--sandstone); font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; }
+    .hdr-btn:active { background: var(--plank); transform: scale(0.91); }
 
-    .wm-icon {
-      width: 32px; height: 32px; border-radius: 9px;
-      background: linear-gradient(135deg, var(--amber) 0%, #b86a20 100%);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px; box-shadow: 0 2px 8px rgba(212,132,58,0.35);
-      flex-shrink: 0;
-    }
+    /* ── Scroll ── */
+    .scroll-area { overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; overscroll-behavior: contain; }
+    .scroll-inner { padding: 16px 14px 24px; display: flex; flex-direction: column; gap: 12px; }
 
-    .wm-text {
-      font-family: 'Lora', Georgia, serif;
-      font-size: 18px; color: var(--parchment);
-      font-weight: 600; letter-spacing: -0.2px;
-    }
-
-    .header-actions { display: flex; gap: 8px; }
-
-    .hdr-btn {
-      width: 38px; height: 38px; border-radius: 10px;
-      background: var(--walnut3); border: 1px solid var(--border);
-      color: var(--sandstone); font-size: 16px;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; transition: all 0.15s; flex-shrink: 0;
-    }
-    .hdr-btn:active { background: var(--plank); transform: scale(0.93); }
-
-    /* ── Scroll area ── */
-    .scroll-area {
-      overflow-y: auto; overflow-x: hidden;
-      -webkit-overflow-scrolling: touch;
-      scroll-behavior: smooth;
-      overscroll-behavior: contain;
-    }
-
-    .scroll-inner { padding: 18px 16px 24px; display: flex; flex-direction: column; gap: 14px; }
-
-    /* ── Empty state ── */
-    .empty-state {
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; min-height: 60vh; gap: 14px; text-align: center;
-      padding: 24px;
-    }
-    .empty-icon {
-      width: 88px; height: 88px; border-radius: 22px;
-      background: var(--walnut3); border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 38px; margin-bottom: 6px; box-shadow: var(--shadow-sm);
-    }
+    /* ── Empty ── */
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 14px; text-align: center; padding: 24px; }
+    .empty-icon { width: 88px; height: 88px; border-radius: 22px; background: var(--walnut3); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 38px; margin-bottom: 6px; }
     .empty-title { font-family: 'Lora', serif; font-size: 22px; color: var(--flax); }
     .empty-sub { font-size: 13px; color: var(--grain3); line-height: 1.5; }
 
-    /* ── Now Playing card ── */
-    .np-card {
-      background: var(--walnut3); border: 1px solid var(--border);
-      border-radius: 22px; overflow: hidden;
-      box-shadow: var(--shadow-md), var(--shadow-inset);
-      position: relative;
+    /* ── Source switcher — big tap targets ── */
+    .source-switcher {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
     }
 
-    .np-card::before {
-      content: ''; position: absolute; top: -80px; right: -60px;
-      width: 280px; height: 280px; border-radius: 50%;
-      background: radial-gradient(circle, rgba(212,132,58,0.16) 0%, transparent 65%);
+    .source-tile {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 8px; padding: 20px 10px;
+      background: var(--walnut3); border: 1px solid var(--border);
+      border-radius: 18px; cursor: pointer; font-family: inherit;
+      transition: all 0.16s; box-shadow: var(--shadow-sm), var(--shadow-inset);
+      position: relative; overflow: hidden;
+      -webkit-tap-highlight-color: transparent; min-height: 96px;
+    }
+
+    .source-tile:active { transform: scale(0.93); }
+
+    .source-tile.active {
+      border-color: var(--amber);
+      background: var(--plank);
+      box-shadow: 0 0 0 1px var(--amber-border), 0 6px 24px rgba(212,132,58,0.20), var(--shadow-inset);
+    }
+
+    /* Glow behind active icon */
+    .source-tile.active::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 40%, rgba(212,132,58,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .source-icon { font-size: 30px; line-height: 1; }
+    .source-label { font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--sandstone); }
+    .source-tile.active .source-label { color: var(--amber2); }
+
+    /* Active indicator dot */
+    .source-tile.active::after {
+      content: ''; position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+      width: 20px; height: 3px; background: var(--amber); border-radius: 2px;
+    }
+
+    /* ── Now playing strip (compact when AirPlay — source controls on device) ── */
+    .np-strip {
+      background: var(--walnut3); border: 1px solid var(--border);
+      border-radius: 18px; overflow: hidden;
+      box-shadow: var(--shadow-md), var(--shadow-inset); position: relative;
+    }
+
+    .np-strip::before {
+      content: ''; position: absolute; top: -60px; right: -40px;
+      width: 200px; height: 200px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(212,132,58,0.12) 0%, transparent 65%);
       pointer-events: none;
     }
 
     /* Art banner */
     .np-art-banner {
-      width: 100%; aspect-ratio: 16/7; overflow: hidden;
+      width: 100%; aspect-ratio: 21/7; overflow: hidden;
       background: var(--plank); position: relative;
       display: flex; align-items: center; justify-content: center;
     }
+    .np-art-banner img { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.4s; }
+    .np-art-banner::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 30%, var(--walnut3) 100%); }
+    .np-art-placeholder { font-size: 36px; opacity: 0.3; }
 
-    .np-art-banner img {
-      width: 100%; height: 100%; object-fit: cover;
-      transition: opacity 0.4s ease;
-    }
+    .np-body { padding: 14px 18px 18px; position: relative; z-index: 1; }
 
-    .np-art-placeholder {
-      font-size: 52px; opacity: 0.4;
-    }
-
-    /* Gradient overlay on art */
-    .np-art-banner::after {
-      content: ''; position: absolute; inset: 0;
-      background: linear-gradient(to bottom, transparent 40%, var(--walnut3) 100%);
-    }
-
-    .np-body { padding: 18px 20px 20px; position: relative; z-index: 1; }
-
-    .np-top-row { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; gap: 10px; }
-
-    .np-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: rgba(212,132,58,0.12); border: 1px solid rgba(212,132,58,0.22);
-      border-radius: 20px; padding: 4px 11px 4px 7px;
-      font-size: 10px; font-weight: 500; letter-spacing: 0.8px;
-      text-transform: uppercase; color: var(--amber2);
-    }
-
-    .badge-pulse {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--online); animation: pulse 2.2s ease-out infinite;
-    }
+    .np-meta-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .np-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(212,132,58,0.12); border: 1px solid rgba(212,132,58,0.22); border-radius: 20px; padding: 4px 10px 4px 7px; font-size: 10px; font-weight: 500; letter-spacing: 0.8px; text-transform: uppercase; color: var(--amber2); }
+    .badge-pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--online); animation: pulse 2.2s ease-out infinite; }
     .badge-pulse.off { background: var(--grain2); animation: none; }
-    @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(122,184,150,0.5)} 70%{box-shadow:0 0 0 7px rgba(122,184,150,0)} 100%{box-shadow:0 0 0 0 rgba(122,184,150,0)} }
+    @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(122,184,150,0.5)}70%{box-shadow:0 0 0 7px rgba(122,184,150,0)}100%{box-shadow:0 0 0 0 rgba(122,184,150,0)} }
 
-    .np-viz { display: flex; align-items: center; gap: 2.5px; height: 22px; }
+    .np-viz { display: flex; align-items: center; gap: 2.5px; height: 20px; }
     .viz-bar { width: 3px; border-radius: 2px; background: var(--amber); opacity: 0.5; transition: height 0.18s ease; }
 
-    .np-track {
-      font-family: 'Lora', Georgia, serif;
-      font-size: 28px; line-height: 1.15;
-      color: var(--parchment); font-weight: 600;
-      margin-bottom: 4px;
-    }
-
-    .np-artist { font-size: 14px; color: var(--sandstone); margin-bottom: 12px; }
-
-    .np-source-tag {
-      display: inline-block; background: rgba(212,180,140,0.07);
-      border: 1px solid var(--border); border-radius: 6px;
-      padding: 4px 10px; font-size: 10px; font-weight: 500;
-      letter-spacing: 0.6px; text-transform: uppercase; color: var(--grain3);
-    }
+    .np-track { font-family: 'Lora', serif; font-size: 24px; line-height: 1.2; color: var(--parchment); font-weight: 600; margin-bottom: 2px; }
+    .np-artist { font-size: 13px; color: var(--sandstone); margin-bottom: 10px; }
 
     /* Progress */
-    .np-progress { margin-top: 14px; display: none; }
+    .np-progress { display: none; margin-bottom: 10px; }
     .np-progress.visible { display: block; }
-    .progress-track { height: 3px; background: var(--grain); border-radius: 2px; overflow: hidden; margin-bottom: 5px; }
+    .progress-track { height: 3px; background: var(--grain); border-radius: 2px; overflow: hidden; margin-bottom: 4px; }
     .progress-fill { height: 100%; background: linear-gradient(to right, var(--amber2), var(--amber)); border-radius: 2px; width: 0%; transition: width 1s linear; }
-    .progress-times { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--grain3); }
+    .progress-times { display: flex; justify-content: space-between; font-size: 10px; color: var(--grain3); }
 
-    /* Transport */
-    .transport {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-top: 18px; padding-top: 16px;
-      border-top: 1px solid var(--border2);
-      gap: 6px;
-    }
-
-    .t-btn {
-      display: flex; align-items: center; justify-content: center;
-      border: none; cursor: pointer; transition: all 0.14s;
-      font-family: inherit; user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .t-btn:active { transform: scale(0.88); }
-
-    .t-btn.sm {
-      width: 50px; height: 50px; border-radius: 50%; font-size: 18px;
-      background: var(--plank); border: 1px solid var(--border);
-      color: var(--sandstone); box-shadow: var(--shadow-sm);
-    }
-
-    .t-btn.play {
-      width: 68px; height: 68px; border-radius: 50%; font-size: 24px;
-      background: linear-gradient(145deg, var(--amber2) 0%, var(--amber) 100%);
-      color: var(--walnut); font-weight: 600;
-      box-shadow: 0 5px 22px rgba(212,132,58,0.45), var(--shadow-inset);
-    }
-
-    .t-btn.play:active { transform: scale(0.92); }
-
-    .t-btn.util {
-      width: 44px; height: 44px; border-radius: 11px; font-size: 14px;
-      background: var(--walnut2); border: 1px solid var(--border2);
-      color: var(--grain3); box-shadow: var(--shadow-sm);
-    }
-
-    .t-btn.util.active {
-      background: rgba(212,132,58,0.15); border-color: var(--amber-border);
-      color: var(--amber2);
-    }
-
-    /* ── Cards ── */
-    .card {
+    /* ── Volume — full width, prominent ── */
+    .vol-card {
       background: var(--walnut3); border: 1px solid var(--border);
-      border-radius: 18px; padding: 18px;
+      border-radius: 18px; padding: 20px 20px 22px;
       box-shadow: var(--shadow-sm), var(--shadow-inset);
     }
 
-    .card-label {
-      font-size: 9px; font-weight: 600; letter-spacing: 1.6px;
-      text-transform: uppercase; color: var(--grain3); margin-bottom: 14px;
-    }
+    .vol-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .vol-label { font-size: 9px; font-weight: 600; letter-spacing: 1.6px; text-transform: uppercase; color: var(--grain3); }
 
-    /* ── Sliders ── */
-    .slider-row { display: flex; align-items: center; gap: 14px; }
+    .vol-actions { display: flex; gap: 8px; }
 
-    .slider-value {
-      font-family: 'Lora', Georgia, serif;
-      font-size: 32px; color: var(--amber2);
-      min-width: 48px; text-align: right; line-height: 1;
+    .vol-action-btn {
+      width: 42px; height: 42px; border-radius: 11px;
+      background: var(--walnut2); border: 1px solid var(--border2);
+      color: var(--grain3); font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.14s; border: none;
+      -webkit-tap-highlight-color: transparent;
     }
+    .vol-action-btn:active { transform: scale(0.88); background: var(--plank); }
+    .vol-action-btn.danger:active { background: rgba(192,90,58,0.20); color: var(--danger); }
+
+    .vol-display {
+      display: flex; align-items: baseline; gap: 6px; margin-bottom: 14px;
+    }
+    .vol-number { font-family: 'Lora', serif; font-size: 56px; color: var(--amber2); line-height: 1; font-weight: 600; }
+    .vol-unit { font-size: 13px; color: var(--grain3); font-weight: 500; }
 
     input[type=range] {
       -webkit-appearance: none; appearance: none;
-      flex: 1; height: 4px; border-radius: 2px; outline: none; cursor: pointer;
+      width: 100%; height: 5px; border-radius: 3px; outline: none; cursor: pointer;
       background: linear-gradient(to right, var(--amber) 0%, var(--amber) var(--pct,50%), var(--grain) var(--pct,50%), var(--grain) 100%);
     }
-
     input[type=range]::-webkit-slider-thumb {
       -webkit-appearance: none; appearance: none;
-      width: 26px; height: 26px; border-radius: 50%;
-      background: var(--parchment); border: 2px solid var(--amber);
-      box-shadow: 0 2px 10px rgba(10,7,4,0.50); cursor: pointer;
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--parchment); border: 2.5px solid var(--amber);
+      box-shadow: 0 2px 12px rgba(10,7,4,0.55); cursor: pointer;
     }
 
-    /* ── Two-col for vol+bass ── */
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    /* Vol step buttons */
+    .vol-steps { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-top: 12px; }
+    .vol-step {
+      padding: 11px 0; background: var(--plank); border: 1px solid var(--border);
+      border-radius: 12px; font-family: inherit; font-size: 13px; font-weight: 600;
+      color: var(--sandstone); cursor: pointer; transition: all 0.14s; text-align: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .vol-step:active { transform: scale(0.93); background: var(--grain); color: var(--parchment); }
+
+    /* ── Bass card ── */
+    .bass-card {
+      background: var(--walnut3); border: 1px solid var(--border);
+      border-radius: 18px; padding: 18px 20px;
+      box-shadow: var(--shadow-sm), var(--shadow-inset);
+    }
+    .bass-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+    .bass-label { font-size: 9px; font-weight: 600; letter-spacing: 1.6px; text-transform: uppercase; color: var(--grain3); }
+    .bass-value { font-family: 'Lora', serif; font-size: 28px; color: var(--amber2); line-height: 1; }
 
     /* ── Group volume ── */
     .group-vol-card {
       background: linear-gradient(135deg, var(--walnut3) 0%, rgba(212,132,58,0.06) 100%);
-      border: 1px solid var(--amber-border); border-radius: 18px; padding: 18px;
+      border: 1px solid var(--amber-border); border-radius: 18px; padding: 18px 20px;
       box-shadow: var(--shadow-sm), var(--shadow-inset);
     }
-
     .group-vol-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
     .group-vol-title { font-size: 9px; font-weight: 600; letter-spacing: 1.6px; text-transform: uppercase; color: var(--amber2); }
-    .group-vol-rooms { font-size: 11px; color: var(--grain3); }
+    .group-vol-rooms { font-size: 11px; color: var(--grain3); max-width: 55%; text-align: right; line-height: 1.4; }
 
-    /* ── Presets ── */
-    .presets-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-
-    .preset-btn {
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; gap: 5px; padding: 16px 8px;
-      background: var(--walnut3); border: 1px solid var(--border);
-      border-radius: 15px; cursor: pointer; font-family: inherit;
-      transition: all 0.15s; min-height: 86px;
-      box-shadow: var(--shadow-sm), var(--shadow-inset);
-      -webkit-tap-highlight-color: transparent;
-      position: relative;
-    }
-
-    .preset-btn:active { transform: scale(0.94); }
-
-    .preset-btn.active {
-      border-color: var(--amber); background: var(--plank);
-      box-shadow: 0 0 0 1px var(--amber-border), var(--shadow-sm);
-    }
-
-    .preset-btn.active::after {
-      content: ''; position: absolute; bottom: 7px; left: 50%; transform: translateX(-50%);
-      width: 18px; height: 2px; background: var(--amber); border-radius: 1px;
-    }
-
-    .preset-num { font-family: 'Lora', serif; font-size: 26px; color: var(--amber2); line-height: 1; }
-    .preset-name { font-size: 9.5px; font-weight: 500; color: var(--sandstone); text-align: center; line-height: 1.3; word-break: break-word; padding: 0 2px; }
-    .preset-btn.empty .preset-num, .preset-btn.empty .preset-name { color: var(--grain); }
-
-    /* ── Sources ── */
-    .sources-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
-
-    .source-chip {
-      display: flex; align-items: center; padding: 9px 18px;
-      background: var(--plank); border: 1px solid var(--border);
-      border-radius: 22px; cursor: pointer; font-family: inherit;
-      font-size: 13px; font-weight: 500; color: var(--sandstone);
-      transition: all 0.14s; box-shadow: var(--shadow-sm);
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .source-chip:active { transform: scale(0.94); }
-    .source-chip.active { background: var(--amber); border-color: var(--amber); color: var(--walnut); font-weight: 600; }
-
-    /* ── Zone ── */
-    .zone-empty { padding: 16px; background: var(--walnut2); border: 1px dashed var(--grain); border-radius: 12px; text-align: center; color: var(--grain3); font-size: 13px; }
-
-    .zone-member-item {
-      display: flex; align-items: center; gap: 12px;
-      padding: 13px 14px; background: var(--walnut2);
-      border: 1px solid var(--border2); border-radius: 13px;
-      margin-bottom: 8px; box-shadow: var(--shadow-sm);
-    }
-
+    /* ── Zone card ── */
+    .card { background: var(--walnut3); border: 1px solid var(--border); border-radius: 18px; padding: 18px; box-shadow: var(--shadow-sm), var(--shadow-inset); }
+    .card-label { font-size: 9px; font-weight: 600; letter-spacing: 1.6px; text-transform: uppercase; color: var(--grain3); margin-bottom: 14px; }
+    .zone-empty { padding: 14px; background: var(--walnut2); border: 1px dashed var(--grain); border-radius: 12px; text-align: center; color: var(--grain3); font-size: 13px; }
+    .zone-member-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--walnut2); border: 1px solid var(--border2); border-radius: 13px; margin-bottom: 8px; }
     .zone-avatar { width: 36px; height: 36px; border-radius: 9px; background: var(--plank); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
     .zone-name { font-weight: 500; font-size: 14px; flex: 1; color: var(--flax); }
-    .zone-pill { font-size: 9.5px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; padding: 4px 10px; border-radius: 10px; }
+    .zone-pill { font-size: 9px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; padding: 4px 10px; border-radius: 10px; }
     .zone-pill.master { background: rgba(212,132,58,0.18); color: var(--amber2); border: 1px solid var(--amber-border); }
     .zone-pill.slave  { background: rgba(122,184,150,0.14); color: var(--online); border: 1px solid rgba(122,184,150,0.25); }
-
     .zone-actions { display: flex; gap: 8px; margin-top: 10px; }
-
-    .zone-btn {
-      flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
-      padding: 12px; background: none; border: 1px dashed var(--grain);
-      border-radius: 12px; color: var(--grain3); font-family: inherit;
-      font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .zone-btn:hover, .zone-btn:active { border-color: var(--amber); color: var(--amber); background: var(--amber-glow); }
-
+    .zone-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 13px; background: none; border: 1px dashed var(--grain); border-radius: 12px; color: var(--grain3); font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+    .zone-btn:active { border-color: var(--amber); color: var(--amber); background: var(--amber-glow); }
     .zone-btn.everywhere { border-color: rgba(122,184,150,0.30); color: var(--online); }
-    .zone-btn.everywhere:hover, .zone-btn.everywhere:active { border-color: var(--online); background: var(--online-glow); }
+    .zone-btn.everywhere:active { border-color: var(--online); background: var(--online-glow); }
 
     /* ── Offline banner ── */
-    .offline-banner {
-      display: none; align-items: center; gap: 10px;
-      padding: 11px 16px; background: rgba(192,90,58,0.15);
-      border: 1px solid rgba(192,90,58,0.30); border-radius: 13px;
-      font-size: 13px; color: var(--danger);
-    }
+    .offline-banner { display: none; align-items: center; gap: 10px; padding: 11px 16px; background: rgba(192,90,58,0.15); border: 1px solid rgba(192,90,58,0.30); border-radius: 13px; font-size: 13px; color: var(--danger); }
     .offline-banner.visible { display: flex; }
 
     /* ── Bottom nav ── */
-    .bottom-nav {
-      background: var(--walnut2); border-top: 1px solid var(--border);
-      display: flex; align-items: center;
-      overflow-x: auto; overflow-y: hidden;
-      -webkit-overflow-scrolling: touch;
-      scroll-behavior: smooth;
-      scrollbar-width: none;
-      padding: 0 8px;
-      box-shadow: 0 -4px 24px rgba(10,7,4,0.30);
-    }
-
+    .bottom-nav { background: var(--walnut2); border-top: 1px solid var(--border); display: flex; align-items: center; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 0 8px; box-shadow: 0 -4px 24px rgba(10,7,4,0.30); }
     .bottom-nav::-webkit-scrollbar { display: none; }
-
-    .nav-item {
-      flex-shrink: 0; display: flex; flex-direction: column;
-      align-items: center; gap: 3px; padding: 10px 14px;
-      border-radius: 12px; cursor: pointer; border: none;
-      background: none; font-family: inherit; color: var(--grain3);
-      font-size: 10px; font-weight: 500; min-width: 64px;
-      transition: all 0.15s; position: relative;
-      -webkit-tap-highlight-color: transparent;
-    }
-
+    .nav-item { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 14px; border-radius: 12px; cursor: pointer; border: none; background: none; font-family: inherit; color: var(--grain3); font-size: 10px; font-weight: 500; min-width: 64px; transition: all 0.15s; position: relative; -webkit-tap-highlight-color: transparent; }
     .nav-item.active { color: var(--amber2); }
-
-    .nav-item.active::before {
-      content: ''; position: absolute; bottom: 6px; left: 50%;
-      transform: translateX(-50%); width: 20px; height: 2px;
-      background: var(--amber); border-radius: 1px;
-    }
-
+    .nav-item.active::before { content: ''; position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); width: 20px; height: 2px; background: var(--amber); border-radius: 1px; }
     .nav-emoji { font-size: 22px; line-height: 1; }
     .nav-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--grain2); position: absolute; top: 8px; right: 10px; transition: all 0.3s; }
     .nav-dot.online { background: var(--online); box-shadow: 0 0 0 3px var(--online-glow); }
 
-    /* ── Modals ── */
-    .modal-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(10,7,4,0.72); backdrop-filter: blur(12px);
-      z-index: 500; align-items: flex-end; justify-content: center;
-      padding-bottom: calc(var(--safe-bottom));
-    }
-
+    /* ── Modals / bottom sheets ── */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(10,7,4,0.72); backdrop-filter: blur(12px); z-index: 500; align-items: flex-end; justify-content: center; padding-bottom: var(--safe-bottom); }
     .modal-overlay.open { display: flex; }
-
-    /* Sheet style from bottom on mobile */
-    .modal {
-      background: var(--walnut2); border: 1px solid var(--border);
-      border-radius: 24px 24px 0 0; padding: 10px 22px 28px;
-      width: 100%; max-width: 540px;
-      box-shadow: var(--shadow-lg), var(--shadow-inset);
-      animation: sheet-in 0.28s cubic-bezier(0.34,1.3,0.64,1);
-      max-height: 88vh; overflow-y: auto;
-    }
-
-    @keyframes sheet-in { from { opacity:0.5; transform: translateY(100px); } to { opacity:1; transform: none; } }
-
+    .modal { background: var(--walnut2); border: 1px solid var(--border); border-radius: 24px 24px 0 0; padding: 10px 22px 28px; width: 100%; max-width: 540px; box-shadow: var(--shadow-lg), var(--shadow-inset); animation: sheet-in 0.26s cubic-bezier(0.34,1.3,0.64,1); max-height: 88vh; overflow-y: auto; }
+    @keyframes sheet-in { from{opacity:0.4;transform:translateY(80px)} to{opacity:1;transform:none} }
     .modal-handle { width: 36px; height: 4px; background: var(--grain); border-radius: 2px; margin: 8px auto 18px; }
     .modal-title { font-family: 'Lora', serif; font-size: 22px; color: var(--parchment); margin-bottom: 20px; font-weight: 600; }
-
     .field { margin-bottom: 14px; }
     .field label { display: block; font-size: 10px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--grain3); margin-bottom: 8px; }
     .field input { width: 100%; padding: 13px 16px; background: var(--walnut3); border: 1px solid var(--border); border-radius: 11px; color: var(--flax); font-family: inherit; font-size: 16px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
     .field input:focus { border-color: var(--amber-border); box-shadow: 0 0 0 3px rgba(212,132,58,0.12); }
     .field input::placeholder { color: var(--grain3); }
-
     .modal-btns { display: flex; gap: 10px; margin-top: 22px; }
     .btn { flex: 1; padding: 14px 16px; border-radius: 12px; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
     .btn:active { transform: scale(0.96); }
     .btn-ghost { background: var(--walnut3); border: 1px solid var(--border); color: var(--sandstone); }
     .btn-primary { background: linear-gradient(145deg, var(--amber2) 0%, var(--amber) 100%); color: var(--walnut); box-shadow: 0 3px 12px rgba(212,132,58,0.35); }
-
-    .zone-check-item { display: flex; align-items: center; gap: 12px; padding: 13px 14px; background: var(--walnut3); border: 1px solid transparent; border-radius: 13px; cursor: pointer; margin-bottom: 8px; transition: all 0.14s; -webkit-tap-highlight-color: transparent; }
+    .zone-check-item { display: flex; align-items: center; gap: 12px; padding: 13px 14px; background: var(--walnut3); border: 1px solid transparent; border-radius: 13px; cursor: pointer; margin-bottom: 8px; transition: all 0.14s; }
     .zone-check-item:has(input:checked) { border-color: rgba(122,184,150,0.35); background: rgba(122,184,150,0.08); }
     .zone-check-item input { accent-color: var(--online); width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; }
     .zone-check-name { font-size: 15px; font-weight: 500; color: var(--flax); flex: 1; }
     .zone-check-ip { font-size: 11px; color: var(--grain3); }
 
     /* ── Toasts ── */
-    .toast-container { position: fixed; top: calc(var(--header-h) + var(--safe-top) + 12px); left: 16px; right: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 999; pointer-events: none; }
+    .toast-container { position: fixed; top: calc(var(--header-h) + var(--safe-top) + 12px); left: 14px; right: 14px; display: flex; flex-direction: column; gap: 8px; z-index: 999; pointer-events: none; }
     .toast { display: flex; align-items: center; gap: 10px; padding: 13px 16px; background: var(--plank); border: 1px solid var(--border); color: var(--flax); border-radius: 14px; font-size: 14px; font-weight: 500; box-shadow: var(--shadow-lg); animation: toast-in 0.2s ease; }
     .toast-icon { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
     .toast.success .toast-icon { background: rgba(122,184,150,0.25); color: var(--online); }
     .toast.error   .toast-icon { background: rgba(192,90,58,0.25); color: var(--danger); }
-    @keyframes toast-in { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:none; } }
+    @keyframes toast-in { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:none} }
 
     ::-webkit-scrollbar { width: 0; }
   </style>
@@ -490,7 +318,7 @@
       <div class="wm-icon">🔊</div>
       <span class="wm-text">SoundTouch</span>
     </div>
-    <div class="header-actions">
+    <div class="header-right">
       <button class="hdr-btn" onclick="playEverywhere()" title="Play everywhere">📡</button>
       <button class="hdr-btn" onclick="openAddModal()">＋</button>
     </div>
@@ -498,103 +326,95 @@
 
   <!-- Scroll area -->
   <div class="scroll-area" id="scrollArea">
-    <div class="scroll-inner" id="scrollInner">
+    <div class="scroll-inner">
 
-      <!-- Empty state -->
       <div class="empty-state" id="emptyState">
         <div class="empty-icon">🎵</div>
         <p class="empty-title">Pick a room</p>
         <p class="empty-sub">Tap a speaker below to control it</p>
       </div>
 
-      <!-- Speaker detail -->
-      <div id="speakerDetail" style="display:none;flex-direction:column;gap:14px">
+      <div id="speakerDetail" style="display:none;flex-direction:column;gap:12px">
 
-        <!-- Offline banner -->
         <div class="offline-banner" id="offlineBanner">⚠ Speaker offline — reconnecting…</div>
 
-        <!-- Now Playing -->
-        <div class="np-card">
+        <!-- Source switcher — big tiles -->
+        <div class="source-switcher" id="sourceSwitcher">
+          <!-- populated by JS -->
+        </div>
+
+        <!-- Now playing strip -->
+        <div class="np-strip">
           <div class="np-art-banner" id="npArtBanner">
             <div class="np-art-placeholder" id="npArtPlaceholder">🎵</div>
           </div>
           <div class="np-body">
-            <div class="np-top-row">
+            <div class="np-meta-row">
               <div class="np-badge">
                 <span class="badge-pulse" id="badgePulse"></span>
                 <span id="badgeText">Now playing</span>
               </div>
               <div class="np-viz" id="viz">
                 <div class="viz-bar" style="height:55%"></div>
-                <div class="viz-bar" style="height:80%"></div>
+                <div class="viz-bar" style="height:78%"></div>
                 <div class="viz-bar" style="height:44%"></div>
                 <div class="viz-bar" style="height:90%"></div>
                 <div class="viz-bar" style="height:60%"></div>
-                <div class="viz-bar" style="height:72%"></div>
-                <div class="viz-bar" style="height:38%"></div>
-                <div class="viz-bar" style="height:84%"></div>
+                <div class="viz-bar" style="height:70%"></div>
+                <div class="viz-bar" style="height:40%"></div>
+                <div class="viz-bar" style="height:82%"></div>
               </div>
             </div>
             <div class="np-track" id="npTrack">—</div>
             <div class="np-artist" id="npArtist"></div>
-            <span class="np-source-tag" id="npSource">—</span>
             <div class="np-progress" id="npProgress">
               <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
               <div class="progress-times"><span id="progressElapsed">0:00</span><span id="progressTotal">0:00</span></div>
             </div>
-            <div class="transport">
-              <button class="t-btn util" id="shuffleBtn" onclick="toggleShuffle()">⇄</button>
-              <button class="t-btn sm" onclick="sendKey('PREV_TRACK')">⏮</button>
-              <button class="t-btn play" id="playBtn" onclick="togglePlay()">▶</button>
-              <button class="t-btn sm" onclick="sendKey('NEXT_TRACK')">⏭</button>
-              <button class="t-btn util" id="repeatBtn" onclick="cycleRepeat()">↺</button>
-            </div>
           </div>
         </div>
 
-        <!-- Volume + Bass -->
-        <div class="two-col">
-          <div class="card">
-            <p class="card-label">Volume</p>
-            <div class="slider-row">
-              <input type="range" id="volSlider" min="0" max="100" value="50"
-                oninput="onSlider(this,'volVal')" onchange="setVolume(this.value)" />
-              <span class="slider-value" id="volVal">—</span>
+        <!-- Volume — prominent -->
+        <div class="vol-card">
+          <div class="vol-top">
+            <span class="vol-label">Volume</span>
+            <div class="vol-actions">
+              <button class="vol-action-btn" onclick="sendKey('MUTE')" title="Mute">🔇</button>
+              <button class="vol-action-btn danger" onclick="sendKey('POWER')" title="Power">⏻</button>
             </div>
           </div>
-          <div class="card">
-            <p class="card-label">Bass</p>
-            <div class="slider-row">
-              <input type="range" id="bassSlider" min="-9" max="9" value="0"
-                oninput="onSlider(this,'bassVal')" onchange="setBass(this.value)" />
-              <span class="slider-value" id="bassVal">—</span>
-            </div>
+          <div class="vol-display">
+            <span class="vol-number" id="volVal">—</span>
+            <span class="vol-unit">/ 100</span>
+          </div>
+          <input type="range" id="volSlider" min="0" max="100" value="50"
+            oninput="onVolSlider(this)" onchange="setVolume(this.value)" />
+          <div class="vol-steps">
+            <button class="vol-step" onclick="setVolStep(10)">10</button>
+            <button class="vol-step" onclick="setVolStep(25)">25</button>
+            <button class="vol-step" onclick="setVolStep(50)">50</button>
+            <button class="vol-step" onclick="setVolStep(75)">75</button>
           </div>
         </div>
 
-        <!-- Group volume (visible when in zone) -->
+        <!-- Bass -->
+        <div class="bass-card">
+          <div class="bass-top">
+            <span class="bass-label">Bass</span>
+            <span class="bass-value" id="bassVal">—</span>
+          </div>
+          <input type="range" id="bassSlider" min="-9" max="9" value="0"
+            oninput="onBassSlider(this)" onchange="setBass(this.value)" />
+        </div>
+
+        <!-- Group volume (zone only) -->
         <div class="group-vol-card" id="groupVolCard" style="display:none">
           <div class="group-vol-header">
             <span class="group-vol-title">🔊 Group volume</span>
             <span class="group-vol-rooms" id="groupVolRooms"></span>
           </div>
-          <div class="slider-row">
-            <input type="range" id="groupVolSlider" min="0" max="100" value="50"
-              oninput="onSlider(this,'groupVolVal')" onchange="setGroupVolume(this.value)" />
-            <span class="slider-value" id="groupVolVal">50</span>
-          </div>
-        </div>
-
-        <!-- Presets -->
-        <div>
-          <p style="font-family:'Lora',serif;font-size:17px;color:var(--flax);margin-bottom:12px;font-weight:600">Presets</p>
-          <div class="presets-grid" id="presetsGrid"></div>
-        </div>
-
-        <!-- Sources -->
-        <div class="card">
-          <p class="card-label">Sources</p>
-          <div class="sources-wrap" id="sourcesGrid"></div>
+          <input type="range" id="groupVolSlider" min="0" max="100" value="50"
+            oninput="onSlider(this,'groupVolVal')" onchange="setGroupVolume(this.value)" />
         </div>
 
         <!-- Zone -->
@@ -616,7 +436,6 @@
 
   <!-- Bottom nav -->
   <nav class="bottom-nav" id="bottomNav"></nav>
-
 </div>
 
 <!-- Add Speaker Sheet -->
@@ -638,7 +457,7 @@
   <div class="modal">
     <div class="modal-handle"></div>
     <p class="modal-title">Manage zone</p>
-    <p style="font-size:13px;color:var(--grain3);margin-bottom:18px;line-height:1.6">This speaker becomes the zone master. Select others to group with it.</p>
+    <p style="font-size:13px;color:var(--grain3);margin-bottom:18px;line-height:1.6">This speaker becomes the master. Select others to group with it.</p>
     <div id="zoneCheckList"></div>
     <div class="modal-btns">
       <button class="btn btn-ghost" onclick="closeZoneModal()">Cancel</button>
@@ -647,7 +466,7 @@
   </div>
 </div>
 
-<!-- Delete confirm sheet -->
+<!-- Delete Sheet -->
 <div class="modal-overlay" id="deleteModal">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -655,7 +474,7 @@
     <p style="font-size:14px;color:var(--grain3);line-height:1.6" id="deleteDesc"></p>
     <div class="modal-btns" style="margin-top:24px">
       <button class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
-      <button class="btn" style="background:var(--danger);color:#fff;flex:1" id="deleteConfirmBtn">Remove</button>
+      <button class="btn" style="background:var(--danger);color:#fff" id="deleteConfirmBtn">Remove</button>
     </div>
   </div>
 </div>
@@ -664,23 +483,45 @@
 
 <script>
 // ── State ──────────────────────────────────────────────────────────────────
-let speakers = [], activeSpeakerId = null, playState = 'STOP_STATE';
-let shuffleOn = false, repeatMode = 'off';
+let speakers = [], activeSpeakerId = null;
 let vizTimer = null, progressTimer = null;
 let elapsedSec = 0, totalSec = 0;
 let currentZoneIds = [];
 let deleteTarget = null;
+let availableSources = [];
+let activeSource = null;
 
-const LAST_SPEAKER_KEY = 'st_last_speaker';
+const LAST_KEY = 'st_last_speaker';
+const SOURCE_META = {
+  'AIRPLAY':    { icon: '', label: 'AirPlay' },
+  'BLUETOOTH':  { icon: '🔵', label: 'Bluetooth' },
+  'AUX':        { icon: '🔌', label: 'AUX' },
+  'HDMI_1':     { icon: '📺', label: 'HDMI 1' },
+  'HDMI_2':     { icon: '📺', label: 'HDMI 2' },
+  'HDMI_3':     { icon: '📺', label: 'HDMI 3' },
+  'OPTICAL':    { icon: '💡', label: 'Optical' },
+  'TV':         { icon: '📺', label: 'TV' },
+};
+
 const roomEmoji = {living:'🛋️',kitchen:'🍳',bed:'🛏️',bath:'🚿',office:'💻',study:'📚',gym:'💪',garage:'🚗',sewing:'🧵',patio:'🌿',deck:'🌿',dining:'🍽️',music:'🎵',media:'📺'};
 function getEmoji(n){const l=n.toLowerCase();for(const[k,v] of Object.entries(roomEmoji))if(l.includes(k))return v;return'🔊';}
 
+function fmtTime(s){s=Math.max(0,Math.floor(s));return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
+
 function onSlider(el, valId) {
-  document.getElementById(valId).textContent = el.value;
+  if(valId) document.getElementById(valId).textContent = el.value;
   el.style.setProperty('--pct', ((el.value-el.min)/(el.max-el.min)*100).toFixed(1)+'%');
 }
 
-function fmtTime(s){s=Math.max(0,Math.floor(s));return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
+function onVolSlider(el) {
+  document.getElementById('volVal').textContent = el.value;
+  el.style.setProperty('--pct', ((el.value-el.min)/(el.max-el.min)*100).toFixed(1)+'%');
+}
+
+function onBassSlider(el) {
+  document.getElementById('bassVal').textContent = el.value;
+  el.style.setProperty('--pct', ((el.value-el.min)/(el.max-el.min)*100).toFixed(1)+'%');
+}
 
 // ── Init ───────────────────────────────────────────────────────────────────
 async function init() {
@@ -688,19 +529,15 @@ async function init() {
   speakers = await r.json();
   renderNav();
   connectSSE();
-  // Aggressive polling — 2s on fast network
   setInterval(pollActive, 2000);
-  const last = localStorage.getItem(LAST_SPEAKER_KEY);
+  const last = localStorage.getItem(LAST_KEY);
   if (last && speakers.find(s => s.id === last)) selectSpeaker(last);
 }
 
 async function pollActive() {
   if (!activeSpeakerId) return;
-  try {
-    const r = await fetch(`/api/${activeSpeakerId}/now_playing`);
-    const d = await r.json();
-    renderNP(d.nowPlaying);
-  } catch (_) {}
+  try { renderNP((await (await fetch(`/api/${activeSpeakerId}/now_playing`)).json()).nowPlaying); }
+  catch (_) {}
 }
 
 // ── SSE ────────────────────────────────────────────────────────────────────
@@ -730,7 +567,7 @@ function markOffline(id) {
 
 function handleUpdate(data) {
   if (data.nowPlaying) renderNP(data.nowPlaying);
-  if (data.volume) syncVol(data.volume);
+  if (data.volume)     syncVol(data.volume);
 }
 
 // ── Nav ────────────────────────────────────────────────────────────────────
@@ -744,23 +581,57 @@ function renderNav() {
     </button>`).join('');
 }
 
-function longPress(e, id) {
-  e.preventDefault();
-  openDeleteModal(id);
-}
+function longPress(e, id) { e.preventDefault(); openDeleteModal(id); }
 
-// ── Speaker Selection ──────────────────────────────────────────────────────
+// ── Select speaker ─────────────────────────────────────────────────────────
 async function selectSpeaker(id) {
   activeSpeakerId = id;
-  localStorage.setItem(LAST_SPEAKER_KEY, id);
+  localStorage.setItem(LAST_KEY, id);
   renderNav();
   document.getElementById('emptyState').style.display = 'none';
   document.getElementById('offlineBanner').classList.remove('visible');
   const sd = document.getElementById('speakerDetail');
-  sd.style.display = 'flex'; sd.style.flexDirection = 'column'; sd.style.gap = '14px';
+  sd.style.display = 'flex'; sd.style.flexDirection = 'column'; sd.style.gap = '12px';
   document.getElementById('scrollArea').scrollTo({ top: 0, behavior: 'smooth' });
-  // Parallel fetch everything
-  await Promise.all([fetchNP(), fetchVol(), fetchBass(), fetchPresets(), fetchSources(), fetchZone()]);
+  await Promise.all([fetchNP(), fetchVol(), fetchBass(), fetchSources(), fetchZone()]);
+}
+
+// ── Sources ────────────────────────────────────────────────────────────────
+async function fetchSources() {
+  try {
+    const d = await (await fetch(`/api/${activeSpeakerId}/sources`)).json();
+    let items = d.sources?.sourceItem || []; if (!Array.isArray(items)) items = [items];
+    // Only show READY sources
+    availableSources = items.filter(i => i && i.$.status === 'READY');
+    renderSourceTiles();
+  } catch (_) { availableSources = []; renderSourceTiles(); }
+}
+
+function renderSourceTiles() {
+  const grid = document.getElementById('sourceSwitcher');
+  if (!availableSources.length) { grid.innerHTML = ''; return; }
+
+  grid.innerHTML = availableSources.map(item => {
+    const key = item.$.sourceAccount || item.$.source || '';
+    const meta = SOURCE_META[key] || SOURCE_META[item.$.source] || { icon: '🔊', label: item._ || item.$.source };
+    const isActive = activeSource && (activeSource.$.source === item.$.source && activeSource.$.sourceAccount === item.$.sourceAccount);
+    return `<button class="source-tile${isActive ? ' active' : ''}"
+      onclick="selectSource(${JSON.stringify(JSON.stringify(item)).slice(1,-1)})">
+      <span class="source-icon">${meta.icon}</span>
+      <span class="source-label">${meta.label}</span>
+    </button>`;
+  }).join('');
+}
+
+async function selectSource(itemJson) {
+  const item = JSON.parse(itemJson);
+  activeSource = item;
+  renderSourceTiles();
+  await fetch(`/api/${activeSpeakerId}/select`, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ ContentItem: item })
+  });
+  setTimeout(fetchNP, 500);
 }
 
 // ── Now Playing ────────────────────────────────────────────────────────────
@@ -771,29 +642,36 @@ async function fetchNP() {
 
 function renderNP(np) {
   if (!np) return;
-  playState = np.$.playStatus || 'STOP_STATE';
-  const playing = playState === 'PLAY_STATE';
+  const playing = (np.$.playStatus || '') === 'PLAY_STATE';
 
   document.getElementById('npTrack').textContent  = np.track || np.stationName || np.ContentItem?.$.itemName || '—';
   document.getElementById('npArtist').textContent = np.artist || np.description || '';
-  document.getElementById('npSource').textContent = np.$.source || '—';
-  document.getElementById('playBtn').textContent  = playing ? '⏸' : '▶';
   document.getElementById('badgePulse').className = 'badge-pulse' + (playing ? '' : ' off');
   document.getElementById('badgeText').textContent = playing ? 'Now playing' : 'Stopped';
 
-  // Album art — full-width banner
+  // Highlight active source tile based on now playing source
+  const npSource = np.$.source;
+  const npAccount = np.$.sourceAccount;
+  if (npSource) {
+    activeSource = { $: { source: npSource, sourceAccount: npAccount, status: 'READY' } };
+    document.querySelectorAll('.source-tile').forEach((t, i) => {
+      const s = availableSources[i];
+      if (!s) return;
+      const match = s.$.source === npSource && (!npAccount || s.$.sourceAccount === npAccount || s.$.source === npAccount);
+      t.classList.toggle('active', match);
+    });
+  }
+
+  // Album art
   const banner = document.getElementById('npArtBanner');
   const placeholder = document.getElementById('npArtPlaceholder');
   const artUrl = np.art?._ || (typeof np.art === 'string' ? np.art : null);
-  // Remove old img if any
   const oldImg = banner.querySelector('img');
   if (artUrl && artUrl.startsWith('http')) {
     if (!oldImg || oldImg.src !== artUrl) {
       if (oldImg) oldImg.remove();
-      const img = document.createElement('img');
-      img.src = artUrl;
-      img.alt = 'Album art';
-      img.onerror = () => { img.remove(); if (placeholder) placeholder.style.display = ''; };
+      const img = document.createElement('img'); img.src = artUrl; img.alt = '';
+      img.onerror = () => { img.remove(); if(placeholder) placeholder.style.display=''; };
       if (placeholder) placeholder.style.display = 'none';
       banner.insertBefore(img, banner.firstChild);
     }
@@ -802,7 +680,7 @@ function renderNP(np) {
     if (placeholder) placeholder.style.display = '';
   }
 
-  // Progress bar
+  // Progress
   const elapsed = parseInt(np.elapsedTime || np.position || 0);
   const total   = parseInt(np.totalTime   || np.duration  || 0);
   const progEl  = document.getElementById('npProgress');
@@ -818,20 +696,14 @@ function renderNP(np) {
     stopProgressTimer();
   }
 
-  // Active preset
-  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-  const loc = np.ContentItem?.$.location;
-  if (loc) document.querySelectorAll(`[data-location="${loc}"]`).forEach(b => b.classList.add('active'));
-
   playing ? startViz() : stopViz();
 }
 
-// ── Progress ───────────────────────────────────────────────────────────────
 function startProgressTimer(playing) {
   stopProgressTimer();
   if (!playing || totalSec <= 0) return;
   progressTimer = setInterval(() => {
-    elapsedSec = Math.min(elapsedSec + 1, totalSec);
+    elapsedSec = Math.min(elapsedSec+1, totalSec);
     document.getElementById('progressElapsed').textContent = fmtTime(elapsedSec);
     document.getElementById('progressFill').style.width    = ((elapsedSec/totalSec)*100).toFixed(1)+'%';
     if (elapsedSec >= totalSec) stopProgressTimer();
@@ -839,7 +711,6 @@ function startProgressTimer(playing) {
 }
 function stopProgressTimer() { clearInterval(progressTimer); progressTimer = null; }
 
-// ── Viz ────────────────────────────────────────────────────────────────────
 function startViz() {
   if (vizTimer) return;
   const bars = document.querySelectorAll('.viz-bar');
@@ -852,31 +723,6 @@ function stopViz() {
   document.querySelectorAll('.viz-bar').forEach(b => { b.style.height='12%'; b.style.opacity='0.2'; });
 }
 
-// ── Transport ──────────────────────────────────────────────────────────────
-async function sendKey(key) {
-  try {
-    await fetch(`/api/${activeSpeakerId}/key`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key})});
-    setTimeout(fetchNP, 400);
-  } catch (_) { toast('Could not reach speaker','error'); }
-}
-
-function togglePlay() { sendKey(playState==='PLAY_STATE'?'PAUSE':'PLAY'); }
-
-function toggleShuffle() {
-  shuffleOn = !shuffleOn;
-  sendKey(shuffleOn ? 'SHUFFLE_ON' : 'SHUFFLE_OFF');
-  document.getElementById('shuffleBtn').classList.toggle('active', shuffleOn);
-}
-
-const repeatModes=['off','one','all'], repeatKeys={off:'REPEAT_OFF',one:'REPEAT_ONE',all:'REPEAT_ALL'}, repeatIcons={off:'↺',one:'🔂',all:'🔁'};
-function cycleRepeat() {
-  repeatMode = repeatModes[(repeatModes.indexOf(repeatMode)+1)%repeatModes.length];
-  sendKey(repeatKeys[repeatMode]);
-  const btn = document.getElementById('repeatBtn');
-  btn.textContent = repeatIcons[repeatMode];
-  btn.classList.toggle('active', repeatMode !== 'off');
-}
-
 // ── Volume ─────────────────────────────────────────────────────────────────
 async function fetchVol() {
   try { syncVol((await (await fetch(`/api/${activeSpeakerId}/volume`)).json()).volume); } catch (_) {}
@@ -884,10 +730,13 @@ async function fetchVol() {
 function syncVol(vol) {
   if (!vol) return;
   const v = parseInt(vol.actualvolume ?? vol.targetvolume ?? 50);
-  const el = document.getElementById('volSlider'); el.value=v; onSlider(el,'volVal');
+  const el = document.getElementById('volSlider'); el.value = v; onVolSlider(el);
 }
 async function setVolume(v) {
   await fetch(`/api/${activeSpeakerId}/volume`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({volume:parseInt(v)})});
+}
+function setVolStep(v) {
+  const el = document.getElementById('volSlider'); el.value = v; onVolSlider(el); setVolume(v);
 }
 async function setGroupVolume(v) {
   await fetch('/api/group-volume',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:currentZoneIds,volume:parseInt(v)})});
@@ -898,59 +747,19 @@ async function fetchBass() {
   try {
     const d = await (await fetch(`/api/${activeSpeakerId}/bass`)).json();
     const v = parseInt(d.bass?.actualbass ?? d.bass?.targetbass ?? 0);
-    const el = document.getElementById('bassSlider'); el.value=v; onSlider(el,'bassVal');
+    const el = document.getElementById('bassSlider'); el.value = v; onBassSlider(el);
   } catch (_) {}
 }
 async function setBass(v) {
   await fetch(`/api/${activeSpeakerId}/bass`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bass:parseInt(v)})});
 }
 
-// ── Presets ────────────────────────────────────────────────────────────────
-async function fetchPresets() {
-  const g = document.getElementById('presetsGrid');
+// ── Keys ───────────────────────────────────────────────────────────────────
+async function sendKey(key) {
   try {
-    const d = await (await fetch(`/api/${activeSpeakerId}/presets`)).json();
-    let list = d.presets?.preset||[]; if(!Array.isArray(list))list=[list];
-    const map={}; list.forEach(p=>{if(p?.$?.id)map[p.$.id]=p;});
-    g.innerHTML='';
-    for(let i=1;i<=6;i++){
-      const p=map[i], name=p?.ContentItem?.$.itemName||p?.ContentItem?._||'', loc=p?.ContentItem?.$.location||'';
-      const btn=document.createElement('button');
-      btn.className=`preset-btn${p?'':' empty'}`;
-      if(loc) btn.dataset.location=loc;
-      btn.innerHTML=`<span class="preset-num">${i}</span><span class="preset-name">${name||'—'}</span>`;
-      if(p) btn.onclick=()=>playPreset(p.ContentItem);
-      g.appendChild(btn);
-    }
-  } catch(_){
-    g.innerHTML=Array.from({length:6},(_,i)=>`<button class="preset-btn empty"><span class="preset-num">${i+1}</span><span class="preset-name">—</span></button>`).join('');
-  }
-}
-async function playPreset(ci) {
-  await fetch(`/api/${activeSpeakerId}/select`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ContentItem:ci})});
-  setTimeout(fetchNP, 500);
-}
-
-// ── Sources ────────────────────────────────────────────────────────────────
-async function fetchSources() {
-  const g = document.getElementById('sourcesGrid');
-  try {
-    const d = await (await fetch(`/api/${activeSpeakerId}/sources`)).json();
-    let items = d.sources?.sourceItem||[]; if(!Array.isArray(items))items=[items];
-    g.innerHTML='';
-    items.forEach(item=>{
-      if(!item||item.$.status!=='READY')return;
-      const chip=document.createElement('button'); chip.className='source-chip';
-      chip.textContent=item._||item.$.source;
-      chip.onclick=()=>{document.querySelectorAll('.source-chip').forEach(c=>c.classList.remove('active'));chip.classList.add('active');selectSource(item);};
-      g.appendChild(chip);
-    });
-    if(!g.innerHTML) g.innerHTML='<span style="font-size:13px;color:var(--grain3)">No sources available</span>';
-  } catch(_){ g.innerHTML='<span style="font-size:13px;color:var(--grain3)">Could not load sources</span>'; }
-}
-async function selectSource(item) {
-  await fetch(`/api/${activeSpeakerId}/select`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ContentItem:item})});
-  setTimeout(fetchNP, 500);
+    await fetch(`/api/${activeSpeakerId}/key`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key})});
+    setTimeout(fetchNP, 400);
+  } catch(_) { toast('Could not reach speaker','error'); }
 }
 
 // ── Zone ───────────────────────────────────────────────────────────────────
@@ -958,17 +767,14 @@ async function fetchZone() {
   const el=document.getElementById('zoneMembers'), st=document.getElementById('zoneStatus'), gc=document.getElementById('groupVolCard');
   try {
     const d=await(await fetch(`/api/${activeSpeakerId}/zone`)).json(), zone=d.zone;
-    if(!zone?.member){
-      st.textContent='No zone'; el.innerHTML='<div class="zone-empty">Not grouped with any speaker.</div>';
-      currentZoneIds=[]; gc.style.display='none'; return;
-    }
+    if(!zone?.member){st.textContent='No zone';el.innerHTML='<div class="zone-empty">Not grouped.</div>';currentZoneIds=[];gc.style.display='none';return;}
     let members=zone.member; if(!Array.isArray(members))members=[members];
     currentZoneIds=members.map(m=>speakers.find(s=>s.ip===m.$.ipaddress)?.id).filter(Boolean);
     st.textContent=`${members.length} speakers`;
     const names=currentZoneIds.map(id=>speakers.find(s=>s.id===id)?.name).filter(Boolean);
     document.getElementById('groupVolRooms').textContent=names.join(' · ');
     const curVol=parseInt(document.getElementById('volSlider').value);
-    const gv=document.getElementById('groupVolSlider'); gv.value=curVol; onSlider(gv,'groupVolVal');
+    const gv=document.getElementById('groupVolSlider'); gv.value=curVol; onSlider(gv,null);
     gc.style.display='block';
     el.innerHTML=members.map(m=>{
       const spk=speakers.find(s=>s.ip===m.$.ipaddress)||{name:m.$.ipaddress};
@@ -985,7 +791,7 @@ function openZoneModal() {
       <span style="font-size:20px">${getEmoji(s.name)}</span>
       <span class="zone-check-name">${s.name}</span>
       <span class="zone-check-ip">${s.ip}</span>
-    </label>`).join('')||'<p style="color:var(--grain3);font-size:14px">No other speakers available.</p>';
+    </label>`).join('')||'<p style="color:var(--grain3);font-size:14px">No other speakers.</p>';
   document.getElementById('zoneModal').classList.add('open');
 }
 function closeZoneModal(){ document.getElementById('zoneModal').classList.remove('open'); }
@@ -1013,7 +819,7 @@ async function playEverywhere() {
   } catch(_){ toast('Could not create zone','error'); }
 }
 
-// ── Speaker Management ─────────────────────────────────────────────────────
+// ── Speaker management ─────────────────────────────────────────────────────
 function openAddModal(){ document.getElementById('addModal').classList.add('open'); }
 function closeAddModal(){ document.getElementById('addModal').classList.remove('open'); }
 
@@ -1030,7 +836,7 @@ function openDeleteModal(id) {
   const spk=speakers.find(s=>s.id===id); if(!spk)return;
   deleteTarget=id;
   document.getElementById('deleteTitle').textContent=`Remove ${spk.name}?`;
-  document.getElementById('deleteDesc').textContent=`${spk.name} (${spk.ip}) will be removed from the app. It won't affect the speaker itself.`;
+  document.getElementById('deleteDesc').textContent=`${spk.name} (${spk.ip}) will be removed from the app.`;
   document.getElementById('deleteConfirmBtn').onclick=()=>confirmDelete();
   document.getElementById('deleteModal').classList.add('open');
 }
@@ -1045,8 +851,7 @@ async function confirmDelete() {
     activeSpeakerId=null;
     document.getElementById('emptyState').style.display='';
     document.getElementById('speakerDetail').style.display='none';
-    stopViz(); stopProgressTimer();
-    localStorage.removeItem(LAST_SPEAKER_KEY);
+    stopViz(); stopProgressTimer(); localStorage.removeItem(LAST_KEY);
   }
   renderNav(); closeDeleteModal(); toast(`${spk?.name} removed`,'success');
 }
@@ -1056,26 +861,22 @@ function toast(msg,type='success'){
   const t=document.createElement('div'); t.className=`toast ${type}`;
   t.innerHTML=`<span class="toast-icon">${type==='success'?'✓':'!'}</span>${msg}`;
   document.getElementById('toasts').appendChild(t);
-  setTimeout(()=>t.remove(),3200);
+  setTimeout(()=>t.remove(),3000);
 }
 
-// ── Close sheets on backdrop tap ───────────────────────────────────────────
+// ── Close sheets on backdrop ───────────────────────────────────────────────
 ['addModal','zoneModal','deleteModal'].forEach(id=>{
   document.getElementById(id).addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open');});
 });
 
-// ── Keyboard (tablet with keyboard) ───────────────────────────────────────
-document.addEventListener('keydown',e=>{
+// ── Keyboard (tablets) ─────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
   if(e.target.tagName==='INPUT')return;
   if(e.key==='Escape'){['addModal','zoneModal','deleteModal'].forEach(id=>document.getElementById(id).classList.remove('open'));return;}
   if(!activeSpeakerId)return;
-  if(e.code==='Space'){e.preventDefault();togglePlay();}
-  if(e.code==='ArrowRight') sendKey('NEXT_TRACK');
-  if(e.code==='ArrowLeft')  sendKey('PREV_TRACK');
-  if(e.code==='KeyM')       sendKey('MUTE');
-  if(e.code==='KeyS')       toggleShuffle();
-  if(e.code==='ArrowUp'){e.preventDefault();const sl=document.getElementById('volSlider');sl.value=Math.min(100,parseInt(sl.value)+5);onSlider(sl,'volVal');setVolume(sl.value);}
-  if(e.code==='ArrowDown'){e.preventDefault();const sl=document.getElementById('volSlider');sl.value=Math.max(0,parseInt(sl.value)-5);onSlider(sl,'volVal');setVolume(sl.value);}
+  if(e.code==='KeyM') sendKey('MUTE');
+  if(e.code==='ArrowUp'){e.preventDefault();const sl=document.getElementById('volSlider');sl.value=Math.min(100,parseInt(sl.value)+5);onVolSlider(sl);setVolume(sl.value);}
+  if(e.code==='ArrowDown'){e.preventDefault();const sl=document.getElementById('volSlider');sl.value=Math.max(0,parseInt(sl.value)-5);onVolSlider(sl);setVolume(sl.value);}
 });
 
 init();
