@@ -1,0 +1,22 @@
+[
+  {
+    "id": "speaker_living_room",
+    "name": "Living Room",
+    "ip": "192.168.10.99"
+  },
+  {
+    "id": "speaker_study_wave",
+    "name": "Study Wave",
+    "ip": "192.168.10.248"
+  },
+  {
+    "id": "speaker_sewing_room",
+    "name": "Sewing Room",
+    "ip": "192.168.10.124"
+  },
+  {
+    "id": "speaker_kitchen",
+    "name": "Kitchen",
+    "ip": "192.168.10.55"
+  }
+]

@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SoundTouch Control</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0d0f;
+      --surface:   #16161a;
+      --surface2:  #1e1e24;
+      --border:    #2a2a35;
+      --accent:    #e8ff47;
+      --accent2:   #47ffe8;
+      --text:      #f0f0f5;
+      --muted:     #6b6b80;
+      --danger:    #ff4762;
+      --online:    #47ff8a;
+      --radius:    12px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      overflow-x: hidden;
+    }
+
+    /* ── Noise texture overlay ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 9999;
+    }
+
+    /* ── Layout ── */
+    .app { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      padding: 24px 0;
+      position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    }
+
+    .logo {
+      padding: 0 24px 28px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .logo h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      letter-spacing: 3px;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .logo p {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .sidebar-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 0 24px;
+      margin-bottom: 8px;
+    }
+
+    .speaker-list { flex: 1; padding: 0 12px; }
+
+    .speaker-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background 0.15s;
+      position: relative;
+    }
+
+    .speaker-item:hover { background: var(--surface2); }
+    .speaker-item.active { background: var(--surface2); }
+    .speaker-item.active::before {
+      content: '';
+      position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+      width: 3px; height: 60%; background: var(--accent); border-radius: 0 3px 3px 0;
+    }
+
+    .speaker-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--muted); flex-shrink: 0;
+      transition: background 0.3s;
+    }
+    .speaker-dot.online { background: var(--online); box-shadow: 0 0 6px var(--online); }
+
+    .speaker-info { flex: 1; min-width: 0; }
+    .speaker-name { font-weight: 500; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .speaker-ip { font-size: 11px; color: var(--muted); }
+
+    .speaker-delete {
+      opacity: 0; padding: 4px;
+      background: none; border: none; color: var(--danger);
+      cursor: pointer; font-size: 16px; line-height: 1;
+      transition: opacity 0.15s;
+    }
+    .speaker-item:hover .speaker-delete { opacity: 1; }
+
+    .add-speaker-btn {
+      margin: 12px 12px 0;
+      width: calc(100% - 24px);
+      padding: 10px;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      background: none; color: var(--muted);
+      cursor: pointer; font-size: 12px; font-family: inherit;
+      transition: all 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .add-speaker-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Add Speaker Modal ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+      z-index: 1000; align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px;
+      width: 340px;
+      animation: slideUp 0.2s ease;
+    }
+    @keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+    .modal h3 { font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; font-size: 20px; margin-bottom: 20px; }
+
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+    .form-group input {
+      width: 100%; padding: 10px 12px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-family: inherit; font-size: 13px;
+      outline: none; transition: border-color 0.15s;
+    }
+    .form-group input:focus { border-color: var(--accent); }
+
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .btn-primary, .btn-ghost {
+      flex: 1; padding: 10px; border-radius: 8px;
+      font-family: inherit; font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s; border: none;
+    }
+    .btn-primary { background: var(--accent); color: #0d0d0f; }
+    .btn-primary:hover { filter: brightness(1.1); }
+    .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--text); }
+
+    /* ── Main Content ── */
+    .main {
+      padding: 32px;
+      overflow-y: auto;
+      display: flex; flex-direction: column; gap: 24px;
+    }
+
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 100%; gap: 12px; color: var(--muted); text-align: center;
+    }
+
+    .empty-icon { font-size: 48px; margin-bottom: 8px; }
+
+    /* ── Now Playing Card ── */
+    .now-playing-card {
+      background: linear-gradient(135deg, var(--surface) 0%, #1a1a22 100%);
+      border: 1px solid var(--border);
+      border-radius: 20px; padding: 28px;
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 20px; align-items: start;
+      position: relative; overflow: hidden;
+    }
+
+    .now-playing-card::after {
+      content: '';
+      position: absolute; top: -40px; right: -40px;
+      width: 180px; height: 180px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(232,255,71,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .np-meta { display: flex; flex-direction: column; gap: 6px; }
+
+    .np-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--accent); font-weight: 500;
+    }
+
+    .np-badge .pulse {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    .np-badge.stopped { color: var(--muted); }
+    .np-badge.stopped .pulse { animation: none; background: var(--muted); }
+
+    .np-track { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 1px; line-height: 1.1; margin-top: 4px; }
+    .np-artist { color: var(--muted); font-size: 13px; }
+    .np-source {
+      margin-top: 8px; font-size: 11px; color: var(--muted);
+      background: var(--surface2); display: inline-block;
+      padding: 3px 10px; border-radius: 20px; border: 1px solid var(--border);
+    }
+
+    /* ── Visualizer bars ── */
+    .visualizer {
+      display: flex; align-items: flex-end; gap: 3px; height: 48px;
+    }
+
+    .viz-bar {
+      width: 4px; background: var(--accent); border-radius: 2px;
+      transition: height 0.2s;
+    }
+
+    .visualizer.paused .viz-bar { height: 4px !important; background: var(--muted); }
+
+    /* ── Transport Controls ── */
+    .transport {
+      display: flex; align-items: center; gap: 12px;
+      margin-top: 20px;
+    }
+
+    .ctrl-btn {
+      display: flex; align-items: center; justify-content: center;
+      border: none; cursor: pointer;
+      transition: all 0.15s; font-size: 16px;
+      border-radius: 50%;
+    }
+
+    .ctrl-btn.sm {
+      width: 36px; height: 36px;
+      background: var(--surface2); color: var(--muted);
+    }
+    .ctrl-btn.sm:hover { background: var(--border); color: var(--text); }
+
+    .ctrl-btn.lg {
+      width: 52px; height: 52px;
+      background: var(--accent); color: #0d0d0f;
+      font-size: 20px;
+    }
+    .ctrl-btn.lg:hover { transform: scale(1.06); filter: brightness(1.1); }
+    .ctrl-btn.lg:active { transform: scale(0.97); }
+
+    /* ── Volume / Bass Row ── */
+    .sliders-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .slider-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px 20px;
+    }
+
+    .slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .slider-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+    .slider-value { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--accent); }
+
+    .slider-wrap { position: relative; }
+
+    input[type=range] {
+      -webkit-appearance: none; appearance: none;
+      width: 100%; height: 4px;
+      background: var(--border); border-radius: 2px; outline: none; cursor: pointer;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid var(--bg);
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+
+    input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+    /* ── Presets ── */
+    .section-title {
+      font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--muted); font-weight: 500; margin-bottom: 12px;
+    }
+
+    .presets-grid {
+      display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px;
+    }
+
+    .preset-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 12px 8px;
+      cursor: pointer; transition: all 0.15s;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      font-family: inherit; color: var(--text);
+      min-height: 76px;
+    }
+
+    .preset-btn:hover { border-color: var(--accent); }
+    .preset-btn.active { border-color: var(--accent); background: rgba(232,255,71,0.06); }
+
+    .preset-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px; color: var(--accent); line-height: 1;
+    }
+
+    .preset-name {
+      font-size: 10px; color: var(--muted);
+      text-align: center; word-break: break-word;
+      line-height: 1.3;
+    }
+
+    .preset-btn.empty .preset-num { color: var(--border); }
+
+    /* ── Sources ── */
+    .sources-grid {
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+
+    .source-btn {
+      padding: 8px 16px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; cursor: pointer; transition: all 0.15s;
+      font-family: inherit; font-size: 12px; color: var(--muted);
+    }
+
+    .source-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+    .source-btn.active { border-color: var(--accent2); color: var(--accent2); background: rgba(71,255,232,0.06); }
+
+    /* ── Zone Manager ── */
+    .zone-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+    }
+
+    .zone-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+
+    .zone-members { display: flex; flex-direction: column; gap: 8px; }
+
+    .zone-member {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px;
+      background: var(--surface2); border-radius: 8px;
+    }
+
+    .zone-member-info { display: flex; align-items: center; gap: 8px; }
+    .zone-member-name { font-size: 13px; font-weight: 500; }
+    .zone-member-role { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+
+    .tag {
+      font-size: 10px; padding: 2px 8px; border-radius: 10px;
+      letter-spacing: 1px; text-transform: uppercase; font-weight: 500;
+    }
+    .tag.master { background: rgba(232,255,71,0.15); color: var(--accent); }
+    .tag.slave  { background: rgba(71,255,232,0.1);  color: var(--accent2); }
+
+    .zone-add-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 14px; font-size: 12px; font-family: inherit;
+      background: none; border: 1px dashed var(--border); border-radius: 8px;
+      color: var(--muted); cursor: pointer; transition: all 0.15s; width: 100%;
+      justify-content: center; margin-top: 8px;
+    }
+    .zone-add-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+    .zone-remove-btn {
+      background: none; border: none; color: var(--danger);
+      cursor: pointer; font-size: 14px; padding: 4px; opacity: 0.6;
+      transition: opacity 0.15s;
+    }
+    .zone-remove-btn:hover { opacity: 1; }
+
+    /* ── Toast notifications ── */
+    .toast-container {
+      position: fixed; bottom: 24px; right: 24px;
+      display: flex; flex-direction: column; gap: 8px;
+      z-index: 9000;
+    }
+
+    .toast {
+      padding: 12px 16px; border-radius: 10px;
+      font-size: 12px; font-weight: 500;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); animation: toastIn 0.2s ease;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    @keyframes toastIn { from { opacity:0; transform: translateX(20px); } to { opacity:1; transform:none; } }
+    .toast.success { border-color: var(--online); }
+    .toast.error   { border-color: var(--danger); }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 720px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { position: relative; height: auto; }
+      .presets-grid { grid-template-columns: repeat(3, 1fr); }
+      .sliders-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="logo">
+      <h1>SoundTouch</h1>
+      <p>Multi-Room Controller</p>
+    </div>
+    <p class="sidebar-label">Speakers</p>
+    <div class="speaker-list" id="speakerList"></div>
+    <button class="add-speaker-btn" onclick="openAddModal()">
+      <span>＋</span> Add Speaker
+    </button>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="main" id="main">
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">🔊</div>
+      <strong>Select a speaker</strong>
+      <p style="color:var(--muted);font-size:12px;">Choose a speaker from the sidebar to begin</p>
+    </div>
+
+    <!-- Speaker Detail (hidden until selected) -->
+    <div id="speakerDetail" style="display:none; display:flex; flex-direction:column; gap:24px;">
+
+      <!-- Now Playing -->
+      <div class="now-playing-card" id="nowPlayingCard">
+        <div class="np-meta">
+          <span class="np-badge" id="playBadge"><span class="pulse"></span> Now Playing</span>
+          <div class="np-track" id="npTrack">—</div>
+          <div class="np-artist" id="npArtist"></div>
+          <div class="np-source" id="npSource">—</div>
+          <!-- Transport -->
+          <div class="transport">
+            <button class="ctrl-btn sm" onclick="sendKey('PREV_TRACK')" title="Previous">⏮</button>
+            <button class="ctrl-btn lg" id="playPauseBtn" onclick="togglePlayPause()">▶</button>
+            <button class="ctrl-btn sm" onclick="sendKey('NEXT_TRACK')" title="Next">⏭</button>
+            <button class="ctrl-btn sm" onclick="sendKey('MUTE')" title="Mute" style="margin-left:8px;">🔇</button>
+            <button class="ctrl-btn sm" onclick="sendKey('POWER')" title="Power" style="margin-left:4px;">⏻</button>
+          </div>
+        </div>
+        <div class="visualizer" id="visualizer">
+          <div class="viz-bar" style="height:60%"></div>
+          <div class="viz-bar" style="height:80%"></div>
+          <div class="viz-bar" style="height:40%"></div>
+          <div class="viz-bar" style="height:90%"></div>
+          <div class="viz-bar" style="height:55%"></div>
+          <div class="viz-bar" style="height:70%"></div>
+          <div class="viz-bar" style="height:35%"></div>
+          <div class="viz-bar" style="height:85%"></div>
+        </div>
+      </div>
+
+      <!-- Volume + Bass -->
+      <div class="sliders-grid">
+        <div class="slider-card">
+          <div class="slider-header">
+            <span class="slider-label">Volume</span>
+            <span class="slider-value" id="volVal">—</span>
+          </div>
+          <input type="range" id="volSlider" min="0" max="100" value="50"
+                 oninput="onVolumeInput(this.value)"
+                 onchange="setVolume(this.value)" />
+        </div>
+        <div class="slider-card">
+          <div class="slider-header">
+            <span class="slider-label">Bass</span>
+            <span class="slider-value" id="bassVal">—</span>
+          </div>
+          <input type="range" id="bassSlider" min="-9" max="9" value="0"
+                 oninput="onBassInput(this.value)"
+                 onchange="setBass(this.value)" />
+        </div>
+      </div>
+
+      <!-- Presets -->
+      <div>
+        <p class="section-title">Presets</p>
+        <div class="presets-grid" id="presetsGrid"></div>
+      </div>
+
+      <!-- Sources -->
+      <div>
+        <p class="section-title">Sources</p>
+        <div class="sources-grid" id="sourcesGrid"></div>
+      </div>
+
+      <!-- Zone Manager -->
+      <div>
+        <p class="section-title">Multi-Room Zone</p>
+        <div class="zone-card">
+          <div class="zone-header">
+            <span style="font-size:13px;font-weight:500;">Zone Members</span>
+            <span id="zoneStatus" style="font-size:11px;color:var(--muted);">No active zone</span>
+          </div>
+          <div class="zone-members" id="zoneMembers"></div>
+          <button class="zone-add-btn" onclick="openZoneModal()">＋ Add to zone / manage</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ── Add Speaker Modal ── -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <h3>Add Speaker</h3>
+    <div class="form-group">
+      <label>Display Name</label>
+      <input type="text" id="newName" placeholder="e.g. Bedroom" />
+    </div>
+    <div class="form-group">
+      <label>IP Address</label>
+      <input type="text" id="newIP" placeholder="192.168.1.x" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeAddModal()">Cancel</button>
+      <button class="btn-primary" onclick="addSpeaker()">Add Speaker</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Zone Modal ── -->
+<div class="modal-overlay" id="zoneModal">
+  <div class="modal" style="width:400px">
+    <h3>Zone Manager</h3>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:16px;">
+      Select this speaker as master and choose slaves to group with it.
+    </p>
+    <div id="zoneModalMembers" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeZoneModal()">Cancel</button>
+      <button class="btn-primary" onclick="applyZone()">Apply Zone</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Toast Container ── -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ─── State ──────────────────────────────────────────────────────────────────
+let speakers = [];
+let activeSpeakerId = null;
+let playState = 'STOP_STATE';
+let vizInterval = null;
+
+// ─── Boot ────────────────────────────────────────────────────────────────────
+async function init() {
+  await fetchSpeakers();
+  connectSSE();
+}
+
+async function fetchSpeakers() {
+  const res = await fetch('/api/speakers');
+  speakers = await res.json();
+  renderSidebar();
+}
+
+function connectSSE() {
+  const es = new EventSource('/api/events');
+  es.addEventListener('speakerUpdate', e => {
+    const { speakerId, data } = JSON.parse(e.data);
+    if (speakerId === activeSpeakerId) handleSpeakerUpdate(data);
+    const dot = document.querySelector(`[data-id="${speakerId}"] .speaker-dot`);
+    if (dot) dot.classList.add('online');
+  });
+  es.addEventListener('speakerOnline', e => {
+    const { speakerId } = JSON.parse(e.data);
+    const dot = document.querySelector(`[data-id="${speakerId}"] .speaker-dot`);
+    if (dot) dot.classList.add('online');
+  });
+  es.addEventListener('speakerOffline', e => {
+    const { speakerId } = JSON.parse(e.data);
+    const dot = document.querySelector(`[data-id="${speakerId}"] .speaker-dot`);
+    if (dot) dot.classList.remove('online');
+  });
+  es.onerror = () => setTimeout(connectSSE, 3000);
+}
+
+function handleSpeakerUpdate(data) {
+  if (data.nowPlaying) updateNowPlaying(data.nowPlaying);
+  if (data.volume)     updateVolumeUI(data.volume.volume);
+}
+
+// ─── Sidebar ─────────────────────────────────────────────────────────────────
+function renderSidebar() {
+  const list = document.getElementById('speakerList');
+  list.innerHTML = speakers.map(s => `
+    <div class="speaker-item ${s.id === activeSpeakerId ? 'active' : ''}" 
+         data-id="${s.id}" onclick="selectSpeaker('${s.id}')">
+      <span class="speaker-dot"></span>
+      <div class="speaker-info">
+        <div class="speaker-name">${s.name}</div>
+        <div class="speaker-ip">${s.ip}</div>
+      </div>
+      <button class="speaker-delete" onclick="deleteSpeaker(event,'${s.id}')">✕</button>
+    </div>
+  `).join('');
+}
+
+// ─── Select Speaker ───────────────────────────────────────────────────────────
+async function selectSpeaker(id) {
+  activeSpeakerId = id;
+  renderSidebar();
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('speakerDetail').style.display = 'flex';
+  await Promise.all([
+    loadNowPlaying(), loadVolume(), loadBass(), loadPresets(), loadSources(), loadZone()
+  ]);
+}
+
+// ─── Now Playing ─────────────────────────────────────────────────────────────
+async function loadNowPlaying() {
+  try {
+    const res = await fetch(`/api/${activeSpeakerId}/now_playing`);
+    const data = await res.json();
+    updateNowPlaying(data.nowPlaying);
+  } catch(e) { console.error(e); }
+}
+
+function updateNowPlaying(np) {
+  if (!np) return;
+  playState = np.$.playStatus || 'STOP_STATE';
+
+  const track  = np.track  || np.stationName || np.ContentItem?.$.itemName || '—';
+  const artist = np.artist || np.description || '';
+  const source = np.$.source || '—';
+
+  document.getElementById('npTrack').textContent  = track;
+  document.getElementById('npArtist').textContent = artist;
+  document.getElementById('npSource').textContent = source;
+
+  const badge = document.getElementById('playBadge');
+  const viz   = document.getElementById('visualizer');
+  const btn   = document.getElementById('playPauseBtn');
+
+  if (playState === 'PLAY_STATE') {
+    badge.className = 'np-badge';
+    badge.innerHTML = '<span class="pulse"></span> Now Playing';
+    viz.classList.remove('paused');
+    btn.textContent = '⏸';
+    startViz();
+  } else {
+    badge.className = 'np-badge stopped';
+    badge.innerHTML = '<span class="pulse"></span> Stopped';
+    viz.classList.add('paused');
+    btn.textContent = '▶';
+    stopViz();
+  }
+}
+
+function startViz() {
+  if (vizInterval) return;
+  vizInterval = setInterval(() => {
+    document.querySelectorAll('.viz-bar').forEach(b => {
+      b.style.height = (20 + Math.random() * 80) + '%';
+    });
+  }, 250);
+}
+
+function stopViz() {
+  clearInterval(vizInterval); vizInterval = null;
+}
+
+// ─── Transport ────────────────────────────────────────────────────────────────
+async function sendKey(key) {
+  try {
+    await fetch(`/api/${activeSpeakerId}/key`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key })
+    });
+    setTimeout(loadNowPlaying, 500);
+  } catch(e) { toast('Error sending command', 'error'); }
+}
+
+function togglePlayPause() {
+  sendKey(playState === 'PLAY_STATE' ? 'PAUSE' : 'PLAY');
+}
+
+// ─── Volume ───────────────────────────────────────────────────────────────────
+async function loadVolume() {
+  try {
+    const res = await fetch(`/api/${activeSpeakerId}/volume`);
+    const data = await res.json();
+    updateVolumeUI(data.volume);
+  } catch(e) {}
+}
+
+function updateVolumeUI(vol) {
+  if (!vol) return;
+  const actual = vol.actualvolume || vol.targetvolume || 0;
+  document.getElementById('volVal').textContent    = actual;
+  document.getElementById('volSlider').value       = actual;
+}
+
+function onVolumeInput(v) { document.getElementById('volVal').textContent = v; }
+
+async function setVolume(v) {
+  await fetch(`/api/${activeSpeakerId}/volume`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ volume: parseInt(v) })
+  });
+}
+
+// ─── Bass ─────────────────────────────────────────────────────────────────────
+async function loadBass() {
+  try {
+    const res = await fetch(`/api/${activeSpeakerId}/bass`);
+    const data = await res.json();
+    const actual = data.bass?.actualbass ?? data.bass?.targetbass ?? 0;
+    document.getElementById('bassVal').textContent  = actual;
+    document.getElementById('bassSlider').value     = actual;
+  } catch(e) {}
+}
+
+function onBassInput(v) { document.getElementById('bassVal').textContent = v; }
+
+async function setBass(v) {
+  await fetch(`/api/${activeSpeakerId}/bass`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ bass: parseInt(v) })
+  });
+}
+
+// ─── Presets ─────────────────────────────────────────────────────────────────
+async function loadPresets() {
+  const grid = document.getElementById('presetsGrid');
+  try {
+    const res = await fetch(`/api/${activeSpeakerId}/presets`);
+    const data = await res.json();
+
+    let presets = data.presets?.preset || [];
+    if (!Array.isArray(presets)) presets = [presets];
+
+    // Build a map by id 1-6
+    const map = {};
+    presets.forEach(p => { if (p && p.$) map[p.$.id] = p; });
+
+    grid.innerHTML = '';
+    for (let i = 1; i <= 6; i++) {
+      const p = map[i];
+      const name = p?.ContentItem?.$.itemName || p?.ContentItem?._  || '';
+      const btn = document.createElement('button');
+      btn.className = `preset-btn${p ? '' : ' empty'}`;
+      btn.innerHTML = `<span class="preset-num">${i}</span><span class="preset-name">${name || '—'}</span>`;
+      if (p) btn.onclick = () => selectPreset(p.ContentItem);
+      grid.appendChild(btn);
+    }
+  } catch(e) {
+    grid.innerHTML = Array.from({length:6},(_,i)=>`<button class="preset-btn empty"><span class="preset-num">${i+1}</span><span class="preset-name">—</span></button>`).join('');
+  }
+}
+
+async function selectPreset(contentItem) {
+  await fetch(`/api/${activeSpeakerId}/select`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ContentItem: contentItem })
+  });
+  setTimeout(loadNowPlaying, 800);
+}
+
+// ─── Sources ──────────────────────────────────────────────────────────────────
+async function loadSources() {
+  const grid = document.getElementById('sourcesGrid');
+  try {
+    const res = await fetch(`/api/${activeSpeakerId}/sources`);
+    const data = await res.json();
+    let items = data.sources?.sourceItem || [];
+    if (!Array.isArray(items)) items = [items];
+
+    grid.innerHTML = '';
+    items.forEach(item => {
+      if (!item || item.$.status !== 'READY') return;
+      const btn = document.createElement('button');
+      btn.className = 'source-btn';
+      btn.textContent = item._ || item.$.source;
+      btn.onclick = () => selectSource(item);
+      grid.appendChild(btn);
+    });
+  } catch(e) { grid.innerHTML = '<span style="color:var(--muted);font-size:12px;">No sources available</span>'; }
+}
+
+async function selectSource(sourceItem) {
+  await fetch(`/api/${activeSpeakerId}/select`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ContentItem: sourceItem })
+  });
+  setTimeout(loadNowPlaying, 800);
+}
+
+// ─── Zone Manager ─────────────────────────────────────────────────────────────
+let currentZone = null;
+
+async function loadZone() {
+  const membersEl = document.getElementById('zoneMembers');
+  const statusEl  = document.getElementById('zoneStatus');
+  try {
+    const res = await fetch(`/api/${activeSpeakerId}/zone`);
+    const data = await res.json();
+    currentZone = data.zone;
+
+    if (!currentZone || !currentZone.member) {
+      statusEl.textContent = 'No active zone';
+      membersEl.innerHTML  = '<p style="color:var(--muted);font-size:12px;">This speaker is not part of a zone.</p>';
+      return;
+    }
+
+    const master   = currentZone.$.master;
+    let members    = currentZone.member;
+    if (!Array.isArray(members)) members = [members];
+
+    statusEl.textContent = `${members.length + 1} speakers`;
+    membersEl.innerHTML  = members.map(m => {
+      const spk = speakers.find(s => s.ip === m.$.ipaddress) || { name: m.$.ipaddress };
+      const isMaster = m._ === master;
+      return `
+        <div class="zone-member">
+          <div class="zone-member-info">
+            <span class="speaker-dot online"></span>
+            <span class="zone-member-name">${spk.name}</span>
+          </div>
+          <span class="tag ${isMaster ? 'master' : 'slave'}">${isMaster ? 'Master' : 'Slave'}</span>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    membersEl.innerHTML = '<p style="color:var(--muted);font-size:12px;">Could not load zone info.</p>';
+  }
+}
+
+// Zone modal
+function openZoneModal() {
+  const container = document.getElementById('zoneModalMembers');
+  const activeSpeaker = speakers.find(s => s.id === activeSpeakerId);
+  container.innerHTML = speakers.filter(s => s.id !== activeSpeakerId).map(s => `
+    <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;cursor:pointer;">
+      <input type="checkbox" data-id="${s.id}" data-ip="${s.ip}" style="accent-color:var(--accent2);" />
+      <span>${s.name}</span>
+      <span style="color:var(--muted);font-size:11px;margin-left:auto;">${s.ip}</span>
+    </label>
+  `).join('');
+  if (!container.innerHTML) container.innerHTML = '<p style="color:var(--muted);font-size:12px;">No other speakers available.</p>';
+  document.getElementById('zoneModal').classList.add('open');
+}
+
+function closeZoneModal() { document.getElementById('zoneModal').classList.remove('open'); }
+
+async function applyZone() {
+  const activeSpeaker = speakers.find(s => s.id === activeSpeakerId);
+  const checked = [...document.querySelectorAll('#zoneModalMembers input:checked')];
+  if (!checked.length) { toast('Select at least one slave speaker', 'error'); return; }
+
+  const deviceRes = await fetch(`/api/${activeSpeakerId}/info`);
+  const deviceData = await deviceRes.json();
+  const masterDeviceId = deviceData.info?.$.deviceID || '';
+
+  const slaves = await Promise.all(checked.map(async cb => {
+    const spk = speakers.find(s => s.id === cb.dataset.id);
+    const infoRes = await fetch(`/api/${spk.id}/info`);
+    const infoData = await infoRes.json();
+    return { ip: spk.ip, deviceId: infoData.info?.$.deviceID || '' };
+  }));
+
+  await fetch(`/api/${activeSpeakerId}/setZone`, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ masterDeviceId, slaves })
+  });
+
+  closeZoneModal();
+  toast('Zone created!', 'success');
+  setTimeout(loadZone, 1000);
+}
+
+// ─── Add / Delete Speakers ────────────────────────────────────────────────────
+function openAddModal()  { document.getElementById('addModal').classList.add('open'); }
+function closeAddModal() { document.getElementById('addModal').classList.remove('open'); }
+
+async function addSpeaker() {
+  const name = document.getElementById('newName').value.trim();
+  const ip   = document.getElementById('newIP').value.trim();
+  if (!name || !ip) { toast('Name and IP are required', 'error'); return; }
+  const res = await fetch('/api/speakers', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ name, ip })
+  });
+  const spk = await res.json();
+  speakers.push(spk);
+  renderSidebar();
+  closeAddModal();
+  document.getElementById('newName').value = '';
+  document.getElementById('newIP').value   = '';
+  toast(`${name} added!`, 'success');
+}
+
+async function deleteSpeaker(e, id) {
+  e.stopPropagation();
+  if (!confirm('Remove this speaker?')) return;
+  await fetch(`/api/speakers/${id}`, { method: 'DELETE' });
+  speakers = speakers.filter(s => s.id !== id);
+  if (activeSpeakerId === id) {
+    activeSpeakerId = null;
+    document.getElementById('emptyState').style.display = 'flex';
+    document.getElementById('speakerDetail').style.display = 'none';
+  }
+  renderSidebar();
+  toast('Speaker removed', 'success');
+}
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  document.getElementById('toastContainer').appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ─── Close modals on overlay click ───────────────────────────────────────────
+document.getElementById('addModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeAddModal(); });
+document.getElementById('zoneModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeZoneModal(); });
+
+init();
+</script>
+</body>
+</html>
